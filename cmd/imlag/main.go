@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -29,6 +30,15 @@ func main() {
 
 	// 1. 根据参数判断是否挂载控制台窗口 (默认无黑框)
 	ui.EnsureConsole(*showConsole || *debug)
+
+	if logFile, err := os.OpenFile("imlag.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
+		defer logFile.Close()
+		if *showConsole || *debug {
+			log.SetOutput(io.MultiWriter(os.Stdout, logFile))
+		} else {
+			log.SetOutput(logFile)
+		}
+	}
 
 	log.Println("==================================================")
 	log.Printf("🎮 ImLagGoGoGo v%s - CS2 死后全自动狡辩系统 启动中...", config.Version)
@@ -102,7 +112,7 @@ func main() {
 		}
 	}
 
-	// 9. 启动系统托盘图标
+	// 9. 启动系统托盘图标 (异步容错，即使无托盘环境亦不影响主对局引擎)
 	go func() {
 		systray.Run(func() {
 			onSystrayReady(cfg, cm, eng, uiPort)
@@ -111,12 +121,12 @@ func main() {
 		})
 	}()
 
-	// 优雅终止信号捕获
+	// 10. 优雅终止信号捕获 (主进程常驻)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	<-sigChan
+	sig := <-sigChan
 
-	log.Println("🛑 正在优雅退出...")
+	log.Printf("🛑 接收到系统终止信号: %v (%T)...", sig, sig)
 	_ = gsiSrv.Stop()
 	systray.Quit()
 }

@@ -22,6 +22,9 @@ config.toml
 Messages.txt
 *.log
 
+# Build output directory
+dist/
+
 # Build archives
 *.zip
 *.tar.gz

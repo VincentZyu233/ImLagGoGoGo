@@ -9,7 +9,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-const Version = "0.1.0"
+const Version = "0.1.1"
 
 type Config struct {
 	Player  PlayerConfig  `toml:"player"`

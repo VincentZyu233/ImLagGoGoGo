@@ -155,6 +155,7 @@ func (s *UIServer) handleConfig(w http.ResponseWriter, r *http.Request) {
 			DeathDelayMs  int    `json:"death_delay_ms"`
 			CloseAction   string `json:"close_action"`
 			AutoStart     bool   `json:"auto_start"`
+			Theme         string `json:"theme"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err == nil {
@@ -167,6 +168,9 @@ func (s *UIServer) handleConfig(w http.ResponseWriter, r *http.Request) {
 			}
 			s.cfg.UI.CloseAction = req.CloseAction
 			s.cfg.UI.AutoStart = req.AutoStart
+			if req.Theme != "" {
+				s.cfg.UI.Theme = req.Theme
+			}
 
 			_ = s.cfg.Save()
 		}

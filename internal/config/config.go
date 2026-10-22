@@ -84,7 +84,7 @@ func DefaultConfig() Config {
 			Encoding:      "auto",
 		},
 		UI: UIConfig{
-			Theme:       "cs2-panorama",
+			Theme:       "system",
 			CloseAction: "ask",
 			AutoStart:   false,
 			CS2Path:     "",

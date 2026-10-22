@@ -46,6 +46,6 @@ func OpenNativeWindow(url string) error {
 	}
 
 	appArg := fmt.Sprintf("--app=%s", url)
-	cmd := exec.Command(edgePath, appArg, "--window-size=940,700")
+	cmd := exec.Command(edgePath, appArg, "--window-size=780,550")
 	return cmd.Start()
 }

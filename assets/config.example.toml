@@ -71,8 +71,11 @@ watch_file = true
 encoding = "auto"
 
 [ui]
-# 语言界面主题与首选项
-theme = "cs2-panorama"
+# 界面主题模式:
+# "system" - 跟随系统 (默认/推荐): 自动跟随 Windows/Linux 操作系统的深浅色模式切换
+# "dark"   - 强制深色: CS2 经典暗黑战术 Panorama 风格
+# "light"  - 强制浅色: CS2 战术白/雪地迷彩风格
+theme = "system"
 
 # 点击主窗口右上角 [X] 关闭按钮时的默认行为:
 # "ask"      - 每次弹窗询问 (默认)

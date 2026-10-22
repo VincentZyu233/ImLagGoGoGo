@@ -22,6 +22,27 @@
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
+        body.theme-light {
+            --bg-base: #e9ecf0;
+            --bg-surface: #ffffff;
+            --bg-elevated: #dee2e6;
+            --border-subtle: rgba(0, 0, 0, 0.08);
+            --border-strong: rgba(0, 0, 0, 0.16);
+            --text-primary: #15181c;
+            --text-secondary: #5a6472;
+            --text-muted: #8c96a3;
+            --accent-cyan: #197bb0;
+            --accent-cyan-bg: rgba(25, 123, 176, 0.25);
+            --accent-gold: #c78619;
+            --accent-red: #c9362d;
+            --accent-green: #2e9e5b;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(222, 67, 57, 0.03), transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(56, 169, 220, 0.03), transparent 40%),
+                linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -573,6 +594,18 @@
 
                 <div class="setting-row">
                     <div class="setting-info">
+                        <div class="setting-name">界面主题风格</div>
+                        <div class="setting-desc">三态切换：默认跟随 Windows/Linux 系统，亦可强制固定深色或浅色。</div>
+                    </div>
+                    <select class="cs2-select" id="cfgTheme" onchange="applyTheme(this.value)">
+                        <option value="system">跟随系统 (默认)</option>
+                        <option value="dark">CS2 经典深色 (暗黑战术)</option>
+                        <option value="light">CS2 极简浅色 (战术白)</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
                         <div class="setting-name">开机静默启动</div>
                         <div class="setting-desc">开机后自动在后台托盘常驻，随时进 CS2 随时生效。</div>
                     </div>
@@ -662,6 +695,33 @@
                 });
         }
 
+        let currentThemePref = 'system';
+        const systemDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function applyTheme(theme) {
+            currentThemePref = theme || 'system';
+            let isDark = true;
+            if (currentThemePref === 'system') {
+                isDark = systemDarkQuery.matches;
+            } else if (currentThemePref === 'light') {
+                isDark = false;
+            } else {
+                isDark = true;
+            }
+
+            if (isDark) {
+                document.body.classList.remove('theme-light');
+            } else {
+                document.body.classList.add('theme-light');
+            }
+        }
+
+        systemDarkQuery.addEventListener('change', () => {
+            if (currentThemePref === 'system') {
+                applyTheme('system');
+            }
+        });
+
         function loadSettings() {
             fetch('/api/config')
                 .then(r => r.json())
@@ -674,6 +734,9 @@
                     updateDelayVal(cfg.chat.death_delay_ms || 555);
                     document.getElementById('cfgCloseAction').value = cfg.ui.close_action || 'ask';
                     document.getElementById('cfgAutoStart').checked = !!cfg.ui.auto_start;
+                    const themeVal = cfg.ui.theme || 'system';
+                    document.getElementById('cfgTheme').value = themeVal;
+                    applyTheme(themeVal);
                 });
         }
 
@@ -685,7 +748,8 @@
                 channel: document.getElementById('cfgChannel').value,
                 death_delay_ms: parseInt(document.getElementById('cfgDeathDelay').value, 10),
                 close_action: document.getElementById('cfgCloseAction').value,
-                auto_start: document.getElementById('cfgAutoStart').checked
+                auto_start: document.getElementById('cfgAutoStart').checked,
+                theme: document.getElementById('cfgTheme').value
             };
 
             fetch('/api/config', {

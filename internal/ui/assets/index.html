@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImLagGoGoGo - CS2 战术死后狡辩系统</title>
+    <style>
+        :root {
+            --bg-base: #131518;
+            --bg-surface: #1a1d22;
+            --bg-elevated: #22262d;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.16);
+            --text-primary: #e6ebf0;
+            --text-secondary: #8c96a3;
+            --text-muted: #58616d;
+            --accent-cyan: #38a9dc;
+            --accent-cyan-bg: rgba(39, 90, 117, 0.65);
+            --accent-gold: #dfa338;
+            --accent-red: #de4339;
+            --accent-green: #48bb78;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(222, 67, 57, 0.06), transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(56, 169, 220, 0.06), transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 20px 20px, 20px 20px;
+        }
+
+        /* 顶部 CS2 风格导航栏 */
+        header {
+            height: 58px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            background: rgba(19, 21, 24, 0.85);
+            backdrop-filter: blur(8px);
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 1px;
+            color: #ffffff;
+        }
+
+        .header-badge {
+            font-size: 10px;
+            background: var(--accent-cyan-bg);
+            color: #d1edff;
+            padding: 2px 6px;
+            border-radius: 2px;
+            border: 1px solid rgba(56, 169, 220, 0.4);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-btn.active {
+            color: #ffffff;
+            background: var(--accent-cyan-bg);
+            box-shadow: inset 0 0 0 1px rgba(56, 169, 220, 0.6);
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            display: inline-block;
+        }
+
+        .status-dot.online {
+            background: var(--accent-green);
+            box-shadow: 0 0 8px rgba(72, 187, 120, 0.6);
+        }
+
+        /* 主体内容滚动区 */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 32px;
+        }
+
+        .tab-panel {
+            display: none;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* 战术卡片与仪表盘 */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        /* GSI 实时战况网格 */
+        .gsi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .gsi-stat {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 12px 14px;
+            border-radius: 2px;
+            border-left: 2px solid var(--accent-cyan);
+        }
+
+        .gsi-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .gsi-val {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* CS2 风格设置列表项 */
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .setting-info {
+            max-width: 55%;
+        }
+
+        .setting-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .setting-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* 战术极简控件 */
+        .cs2-select {
+            background: #101215;
+            color: var(--text-primary);
+            border: 1px solid var(--border-strong);
+            border-radius: 2px;
+            padding: 6px 12px;
+            font-size: 13px;
+            min-width: 160px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .cs2-select:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cs2-slider {
+            -webkit-appearance: none;
+            width: 140px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .cs2-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #ffffff;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        .badge-val {
+            background: #000000;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            min-width: 55px;
+            text-align: center;
+        }
+
+        .cs2-input {
+            background: #101215;
+            color: var(--text-primary);
+            border: 1px solid var(--border-strong);
+            border-radius: 2px;
+            padding: 6px 12px;
+            font-size: 13px;
+            width: 240px;
+            outline: none;
+        }
+
+        .cs2-input:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border: 1px solid var(--border-strong);
+            border-radius: 2px;
+            padding: 7px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .btn-cyan {
+            background: var(--accent-cyan-bg);
+            border-color: rgba(56, 169, 220, 0.6);
+            color: #ffffff;
+        }
+
+        .btn-cyan:hover {
+            background: rgba(56, 169, 220, 0.8);
+        }
+
+        /* 词库列表 */
+        .corpus-list {
+            max-height: 380px;
+            overflow-y: auto;
+            border: 1px solid var(--border-subtle);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .corpus-item {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .corpus-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* 模态弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-strong);
+            width: 420px;
+            padding: 24px;
+            border-radius: 4px;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+
+        .modal-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-elevated);
+            color: #ffffff;
+            border: 1px solid var(--accent-cyan);
+            padding: 10px 18px;
+            border-radius: 2px;
+            font-size: 13px;
+            display: none;
+            z-index: 2000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部导航栏 -->
+    <header>
+        <div class="header-title">
+            <span>IMLAG GOGOGO</span>
+            <span class="header-badge">CS2 PANORAMA</span>
+        </div>
+        <div class="nav-tabs">
+            <button class="nav-btn active" onclick="switchTab('dashboard')">实时战局</button>
+            <button class="nav-btn" onclick="switchTab('corpus')">脱罪词库</button>
+            <button class="nav-btn" onclick="switchTab('settings')">对局设置</button>
+        </div>
+        <div class="header-status">
+            <span id="gsiStatusDot" class="status-dot"></span>
+            <span id="gsiStatusText">等待 CS2 连接 (:4000)</span>
+        </div>
+    </header>
+
+    <!-- 主体内容 -->
+    <main>
+        <!-- 标签页 1：实时仪表盘 -->
+        <div id="tab-dashboard" class="tab-panel active">
+            <!-- 实时状态卡片 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">LIVE GSI MONITOR (实时状态)</span>
+                    <button class="btn btn-cyan" onclick="testSay()">🎯 3秒模拟测试</button>
+                </div>
+                <div class="gsi-grid">
+                    <div class="gsi-stat">
+                        <div class="gsi-label">当前玩家</div>
+                        <div class="gsi-val" id="statPlayer">未检测到</div>
+                    </div>
+                    <div class="gsi-stat">
+                        <div class="gsi-label">生命状态</div>
+                        <div class="gsi-val" id="statHealth">--</div>
+                    </div>
+                    <div class="gsi-stat">
+                        <div class="gsi-label">当前对局地图</div>
+                        <div class="gsi-val" id="statMap">无活动地图</div>
+                    </div>
+                    <div class="gsi-stat">
+                        <div class="gsi-label">今日狡辩总计</div>
+                        <div class="gsi-val" id="statCount">0 次</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GSI 部署与路径 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">CS2 路径与配置部署</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn" onclick="browseCS2Path()">📂 手动选择路径</button>
+                        <button class="btn btn-cyan" onclick="installGSI()">⚡ 一键部署 GSI 配置</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">检测到的 CS2 安装路径</div>
+                        <div class="setting-desc" id="cs2PathDisplay">正在自动探测 Steam 安装库...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 最近一条狡辩记录 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">RECENT EXCUSE (最近一次发出的借口)</span>
+                </div>
+                <div style="padding: 10px 0; font-size: 15px; color: #ffffff;" id="lastExcuseText">
+                    暂无触发记录，快进死斗送一个试试！
+                </div>
+            </div>
+        </div>
+
+        <!-- 标签页 2：词库管理 -->
+        <div id="tab-corpus" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">词库列表 (<span id="corpusCount">0</span> 句)</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn" onclick="openCorpusFile()">📝 记事本编辑 Messages.txt</button>
+                        <button class="btn btn-cyan" onclick="reloadCorpus()">🔄 手动刷新重载</button>
+                    </div>
+                </div>
+                <div class="corpus-list" id="corpusListContainer">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 标签页 3：设置 -->
+        <div id="tab-settings" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">核心行为设置</span>
+                    <button class="btn btn-cyan" onclick="saveSettings()">💾 保存配置</button>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">SteamID64 (本人精准识别)</div>
+                        <div class="setting-desc">可前往 <a href="#" onclick="openSteamIdIo()" style="color:var(--accent-cyan);">steamid.io</a> 查询，或查看个人主页 URL 末尾纯数字。填入后游戏改名也能 100% 识别。</div>
+                    </div>
+                    <input type="text" class="cs2-input" id="cfgSteamId" placeholder="例如: 76561198xxxxxxxx">
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">运行模式 (Behavior Mode)</div>
+                        <div class="setting-desc">推荐【二者兼有】：死后 GSI 自动狡辩，平时想发也能随手按键发。</div>
+                    </div>
+                    <select class="cs2-select" id="cfgMode">
+                        <option value="both">二者兼有 (自动+手动)</option>
+                        <option value="auto">仅死后自动 GSI 狡辩</option>
+                        <option value="cfg">仅手动按键 CFG 轮转</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">词库抽样算法</div>
+                        <div class="setting-desc">【洗牌池】像扑克抽牌一样无放回，全部说过一遍前绝不连发重复词。</div>
+                    </div>
+                    <select class="cs2-select" id="cfgSelectionMode">
+                        <option value="shuffle">洗牌池模式 (Shuffle Deck)</option>
+                        <option value="random">纯随机模式 (Random)</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">聊天广播频道</div>
+                        <div class="setting-desc">选择发公屏全局聊天还是仅队内可见。</div>
+                    </div>
+                    <select class="cs2-select" id="cfgChannel">
+                        <option value="all">公屏全局聊天 (Y)</option>
+                        <option value="team">队内聊天 (U)</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">死后拟真停顿延迟 (ms)</div>
+                        <div class="setting-desc">默认 555ms。避开游戏死亡硬直与按键惯性，极度逼真且防止被吞按键。</div>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" class="cs2-slider" id="cfgDeathDelay" min="100" max="1500" step="50" oninput="updateDelayVal(this.value)">
+                        <span class="badge-val" id="delayBadge">555 ms</span>
+                    </div>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">关闭窗口 (X) 行为</div>
+                        <div class="setting-desc">设置点击窗口右上角关闭按钮时的默认操作。</div>
+                    </div>
+                    <select class="cs2-select" id="cfgCloseAction">
+                        <option value="ask">每次询问</option>
+                        <option value="minimize">最小化到右下角托盘保持监听</option>
+                        <option value="exit">直接退出程序</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name">开机静默启动</div>
+                        <div class="setting-desc">开机后自动在后台托盘常驻，随时进 CS2 随时生效。</div>
+                    </div>
+                    <input type="checkbox" id="cfgAutoStart" style="transform: scale(1.3); cursor: pointer;">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 弹出的 CS2 风格关闭确认对话框 -->
+    <div id="closeModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">关闭 IMLAG GOGOGO</div>
+            <div class="modal-desc">
+                是否继续在后台监听 CS2 对局并在系统托盘保持守护？<br><br>
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="modalRemember"> 记住我的选择，以后不再询问
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cyan" onclick="confirmClose('minimize')">最小化到托盘</button>
+                <button class="btn" onclick="confirmClose('exit')">直接退出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 吐司通知提示 -->
+    <div id="toast" class="toast">操作成功</div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        function updateDelayVal(val) {
+            document.getElementById('delayBadge').innerText = val + " ms";
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 2200);
+        }
+
+        function pollState() {
+            fetch('/api/state')
+                .then(r => r.json())
+                .then(data => {
+                    const dot = document.getElementById('gsiStatusDot');
+                    const text = document.getElementById('gsiStatusText');
+                    if (data.connected) {
+                        dot.className = 'status-dot online';
+                        text.innerText = 'CS2 已连接 (端口 :' + data.port + ')';
+                    } else {
+                        dot.className = 'status-dot';
+                        text.innerText = '等待 CS2 启动并连接 (:' + data.port + ')';
+                    }
+
+                    document.getElementById('statPlayer').innerText = data.player || '未就绪';
+                    document.getElementById('statHealth').innerText = data.health !== undefined ? data.health + ' HP' : '--';
+                    document.getElementById('statMap').innerText = data.map || '未在对局';
+                    document.getElementById('statCount').innerText = data.deathCount + ' 次';
+                    document.getElementById('cs2PathDisplay').innerText = data.cs2Path || '未检测到，请点击右侧手动选择';
+
+                    if (data.lastExcuse) {
+                        document.getElementById('lastExcuseText').innerText = '"' + data.lastExcuse + '" (' + data.lastExcuseTime + ')';
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function loadCorpus() {
+            fetch('/api/corpus')
+                .then(r => r.json())
+                .then(list => {
+                    document.getElementById('corpusCount').innerText = list.length;
+                    const container = document.getElementById('corpusListContainer');
+                    container.innerHTML = list.map((item, idx) => `
+                        <div class="corpus-item">
+                            <span><strong style="color:var(--text-secondary); margin-right:8px;">#${idx+1}</strong> ${item}</span>
+                        </div>
+                    `).join('');
+                });
+        }
+
+        function loadSettings() {
+            fetch('/api/config')
+                .then(r => r.json())
+                .then(cfg => {
+                    document.getElementById('cfgSteamId').value = cfg.player.steamid || '';
+                    document.getElementById('cfgMode').value = cfg.mode.behavior_mode || 'both';
+                    document.getElementById('cfgSelectionMode').value = cfg.corpus.selection_mode || 'shuffle';
+                    document.getElementById('cfgChannel').value = cfg.chat.channel || 'all';
+                    document.getElementById('cfgDeathDelay').value = cfg.chat.death_delay_ms || 555;
+                    updateDelayVal(cfg.chat.death_delay_ms || 555);
+                    document.getElementById('cfgCloseAction').value = cfg.ui.close_action || 'ask';
+                    document.getElementById('cfgAutoStart').checked = !!cfg.ui.auto_start;
+                });
+        }
+
+        function saveSettings() {
+            const payload = {
+                steamid: document.getElementById('cfgSteamId').value.trim(),
+                behavior_mode: document.getElementById('cfgMode').value,
+                selection_mode: document.getElementById('cfgSelectionMode').value,
+                channel: document.getElementById('cfgChannel').value,
+                death_delay_ms: parseInt(document.getElementById('cfgDeathDelay').value, 10),
+                close_action: document.getElementById('cfgCloseAction').value,
+                auto_start: document.getElementById('cfgAutoStart').checked
+            };
+
+            fetch('/api/config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            }).then(() => showToast('配置已保存生效！'));
+        }
+
+        function testSay() {
+            showToast('将在 3 秒后模拟发送借口，请切到聊天框或输入区...');
+            fetch('/api/test-say', {method: 'POST'})
+                .then(r => r.json())
+                .then(res => {
+                    setTimeout(() => {
+                        showToast('已模拟键入借口: ' + res.message);
+                    }, 3000);
+                });
+        }
+
+        function installGSI() {
+            fetch('/api/install-gsi', {method: 'POST'})
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        showToast('GSI 配置已成功写入 CS2 cfg 目录！');
+                    } else {
+                        showToast('写入失败: ' + res.error);
+                    }
+                });
+        }
+
+        function browseCS2Path() {
+            fetch('/api/choose-cs2-path', {method: 'POST'})
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        showToast('已选定 CS2 目录: ' + res.path);
+                        pollState();
+                    }
+                });
+        }
+
+        function openCorpusFile() {
+            fetch('/api/open-messages', {method: 'POST'});
+        }
+
+        function reloadCorpus() {
+            fetch('/api/reload-corpus', {method: 'POST'})
+                .then(() => {
+                    loadCorpus();
+                    showToast('词库已刷新重载！');
+                });
+        }
+
+        function openSteamIdIo() {
+            fetch('/api/open-url?url=' + encodeURIComponent('https://steamid.io'), {method: 'POST'});
+        }
+
+        function confirmClose(action) {
+            const remember = document.getElementById('modalRemember').checked;
+            fetch('/api/close-action', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action, remember})
+            }).then(() => {
+                document.getElementById('closeModal').classList.remove('active');
+            });
+        }
+
+        // 启动轮询与初始加载
+        setInterval(pollState, 1500);
+        pollState();
+        loadCorpus();
+        loadSettings();
+    </script>
+</body>
+</html>

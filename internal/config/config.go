@@ -9,7 +9,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-const Version = "0.1.1"
+const Version = "0.0.2"
 
 type Config struct {
 	Player  PlayerConfig  `toml:"player"`
@@ -62,8 +62,8 @@ type UIConfig struct {
 func DefaultConfig() Config {
 	return Config{
 		Player: PlayerConfig{
-			SteamID:     "",
-			PlayerNames: []string{},
+			SteamID:     "76561198307564265",
+			PlayerNames: []string{"VincentZyu"},
 		},
 		Mode: ModeConfig{
 			BehaviorMode: "both",

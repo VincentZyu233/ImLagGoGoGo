@@ -432,7 +432,7 @@
     <header>
         <div class="header-title">
             <span>IMLAG GOGOGO</span>
-            <span class="header-badge">v0.1.1</span>
+            <span class="header-badge">v0.0.2</span>
             <span class="header-badge" style="background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); color: #8e9ca8;">PANORAMA</span>
         </div>
         <div class="nav-tabs">
@@ -531,7 +531,7 @@
                 <div class="setting-row">
                     <div class="setting-info">
                         <div class="setting-name">SteamID64 (本人精准识别)</div>
-                        <div class="setting-desc">可前往 <a href="#" onclick="openSteamIdIo()" style="color:var(--accent-cyan);">steamid.io</a> 查询，或查看个人主页 URL 末尾纯数字。填入后游戏改名也能 100% 识别。</div>
+                        <div class="setting-desc">可前往 <a href="javascript:void(0)" onclick="openSteamIdIo(event)" style="color:var(--accent-cyan);">steamid.io</a> 查询，或查看个人主页 URL 末尾纯数字。填入后游戏改名也能 100% 识别。</div>
                     </div>
                     <input type="text" class="cs2-input" id="cfgSteamId" placeholder="例如: 76561198xxxxxxxx">
                 </div>
@@ -806,9 +806,22 @@
                 });
         }
 
-        function openSteamIdIo() {
+        function openSteamIdIo(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
             fetch('/api/open-url?url=' + encodeURIComponent('https://steamid.io'), {method: 'POST'});
+            return false;
         }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.outerHeight > 540 || window.outerWidth > 800) {
+                try {
+                    window.resizeTo(760, 500);
+                } catch (err) {}
+            }
+        });
 
         function confirmClose(action) {
             const remember = document.getElementById('modalRemember').checked;

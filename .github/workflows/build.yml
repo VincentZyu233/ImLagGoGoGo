@@ -49,7 +49,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          $tag = if ($env:GITHUB_REF -like "refs/tags/*") { $env:GITHUB_REF.Substring(10) } else { "v0.1.1" }
+          $tag = if ($env:GITHUB_REF -like "refs/tags/*") { $env:GITHUB_REF.Substring(10) } else { "v0.0.2" }
           gh release delete $tag --yes --cleanup-tag 2>$null || $true
           gh release create $tag `
             --title "ImLagGoGoGo $tag (CS2 战术死后狡辩系统 - Beta)" `

@@ -7,11 +7,11 @@
 # 玩家 SteamID64 (优先推荐使用)
 # 提示: 可前往 https://steamid.io 查询您的 SteamID64，或者查看您的个人主页 URL，末尾纯数字即是。
 # 填写 SteamID64 后，无论您在游戏中怎么换昵称、加战队前缀，都能 100% 精准识别本人！
-steamid = ""
+steamid = "76561198307564265"
 
 # 玩家备选昵称列表 (若未填写 steamid 则通过昵称匹配)
 # 支持配置多个开黑曾用名，只要匹配其中任意一个即视为本人死亡。
-player_names = ["MyPlayerName", "我的CS2昵称"]
+player_names = ["VincentZyu"]
 
 [mode]
 # 运行行为模式:

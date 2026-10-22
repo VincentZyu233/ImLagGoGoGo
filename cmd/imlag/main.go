@@ -31,7 +31,7 @@ func main() {
 	ui.EnsureConsole(*showConsole || *debug)
 
 	log.Println("==================================================")
-	log.Println("🎮 ImLagGoGoGo - CS2 死后全自动狡辩系统 启动中...")
+	log.Printf("🎮 ImLagGoGoGo v%s - CS2 死后全自动狡辩系统 启动中...", config.Version)
 	log.Println("==================================================")
 
 	// 2. 加载配置

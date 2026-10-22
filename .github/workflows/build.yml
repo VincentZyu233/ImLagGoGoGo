@@ -52,15 +52,15 @@ jobs:
           path: ImLagGoGoGo-windows-x64.zip
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, 'build release')
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          $tag = if ($env:GITHUB_REF -like "refs/tags/*") { $env:GITHUB_REF.Substring(10) } else { "v1.0.0" }
+          $tag = if ($env:GITHUB_REF -like "refs/tags/*") { $env:GITHUB_REF.Substring(10) } else { "v0.1.0" }
           gh release delete $tag --yes --cleanup-tag 2>$null || $true
           gh release create $tag `
-            --title "ImLagGoGoGo $tag (CS2 战术死后狡辩系统)" `
-            --notes "### 🎮 ImLagGoGoGo $tag`n`n基于 Go 1.24 重构，纯静态单二进制，仅约 7MB 体积，原生 CS2 沉浸式战术 UI。`n`n- 彻底杜绝拼音输入法候选框吞字`n- 洗牌池无放回借口轮转`n- 智能端口冲突避让 (4000~4999)`n- 全自动/手动按键双模支持" `
+            --title "ImLagGoGoGo $tag (CS2 战术死后狡辩系统 - Beta)" `
+            --notes "### 🎮 ImLagGoGoGo $tag (Beta)`n`n基于 Go 1.24 重构，纯静态单二进制，仅约 7MB 体积，原生 CS2 沉浸式战术 UI。`n`n- 彻底杜绝拼音输入法候选框吞字`n- 洗牌池无放回借口轮转`n- 智能端口冲突避让 (4000~4999)`n- 全自动/手动按键双模支持" `
             --latest `
             ImLagGoGoGo-windows-x64.zip

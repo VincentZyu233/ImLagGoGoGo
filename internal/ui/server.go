@@ -196,7 +196,11 @@ func (s *UIServer) handleTestSay(w http.ResponseWriter, r *http.Request) {
 
 func (s *UIServer) handleInstallGSI(w http.ResponseWriter, r *http.Request) {
 	err := s.driver.InstallGSIConfig(s.gsiSrv.ActualPort())
-	res := map[string]any{"success": err == nil}
+	isCS2Running := s.driver.IsCS2Running()
+	res := map[string]any{
+		"success":        err == nil,
+		"is_cs2_running": isCS2Running,
+	}
 	if err != nil {
 		res["error"] = err.Error()
 	}

@@ -455,7 +455,7 @@
     <header>
         <div class="header-title">
             <span>IMLAG GOGOGO</span>
-            <span class="header-badge">v0.0.2</span>
+            <span class="header-badge">v0.0.3</span>
             <span class="header-badge" style="background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); color: #8e9ca8;">PANORAMA</span>
         </div>
         <div class="nav-tabs">
@@ -799,7 +799,12 @@
                 .then(r => r.json())
                 .then(res => {
                     if (res.success) {
-                        showToast('GSI 配置已成功写入 CS2 cfg 目录！');
+                        if (res.is_cs2_running) {
+                            alert("✅ GSI 配置文件已写入 CS2 目录！\n\n💡 检测到 CS2 当前正在运行中：\n由于是首次配置生效，建议在 CS2 游戏控制台输入：\nexec gamestate_integration_imlag.cfg\n即可立即生效连接！或者在下一把重启游戏后永久生效。");
+                            showToast('GSI 配置已部署 (CS2 运行中，已弹窗提示)');
+                        } else {
+                            showToast('GSI 配置已成功写入 CS2 cfg 目录！');
+                        }
                     } else {
                         showToast('写入失败: ' + res.error);
                     }

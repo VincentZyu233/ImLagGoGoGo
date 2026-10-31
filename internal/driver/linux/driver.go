@@ -15,6 +15,10 @@ func (d *LinuxDriver) IsCS2Foreground() bool {
 	return true
 }
 
+func (d *LinuxDriver) IsCS2Running() bool {
+	return false
+}
+
 func (d *LinuxDriver) SendChatMessage(chatKey string, message string, delayMs int) error {
 	// 预留: /dev/uinput 与剪贴板注入
 	return fmt.Errorf("linux input injector is not implemented yet")

@@ -46,7 +46,7 @@ def build(target: str, is_debug: bool = False, do_package: bool = False):
     arch_str = parts[1] if len(parts) > 1 else "x64"
     goarch = "amd64" if arch_str in ("x64", "amd64") else arch_str
 
-    exe_name = "imlag.exe" if goos == "windows" else "imlag"
+    exe_name = "imlag-gogo.exe" if goos == "windows" else "imlag-gogo"
     output_bin = DIST_DIR / exe_name
 
     ldflags_list = ["-s", "-w"]

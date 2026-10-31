@@ -7,9 +7,10 @@ type Driver interface {
 	CfgLocator
 }
 
-// WindowTracker 负责检测 CS2 游戏是否处于当前前台窗口
+// WindowTracker 负责检测 CS2 游戏是否运行以及是否处于当前前台窗口
 type WindowTracker interface {
 	IsCS2Foreground() bool
+	IsCS2Running() bool
 }
 
 // InputInjector 负责向游戏窗口模拟按键与注入 Unicode 借口文字

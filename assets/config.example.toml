@@ -43,13 +43,13 @@ check_foreground = true
 toggle_hotkey = "Ctrl+Shift+S"
 
 [network]
-# GSI 监听起始端口 (默认 4000)
-gsi_port = 4000
+# GSI 监听起始端口 (默认 9090，谐音 gogo)
+gsi_port = 9090
 
-# GSI 监听避让最大端口 (默认 4999)
-# 若启动时发现 4000 端口已被其他应用占用，程序将在 [4000 ~ 4999] 范围内自动寻找可用端口，
+# GSI 监听避让最大端口 (默认 9099)
+# 若启动时发现 9090 端口已被其他应用占用，程序将在 [9090 ~ 9099] 范围内自动寻找可用端口，
 # 并全自动更新 CS2 的 gamestate_integration_imlag.cfg，实现用户完全零感知的端口避让。
-max_port = 4999
+max_gsi_port = 9099
 
 [corpus]
 # 语料借口词库文件名 (与程序同级目录)

@@ -41,8 +41,8 @@ type ChatConfig struct {
 }
 
 type NetworkConfig struct {
-	GSIPort int `toml:"gsi_port"` // 默认 4000
-	MaxPort int `toml:"max_port"` // 默认 4999
+	GSIPort    int `toml:"gsi_port"`     // 默认 9090 (谐音 gogo)
+	MaxGSIPort int `toml:"max_gsi_port"` // 默认 9099
 }
 
 type CorpusConfig struct {
@@ -81,8 +81,8 @@ func DefaultConfig() Config {
 			ToggleHotkey:    "Ctrl+Shift+S",
 		},
 		Network: NetworkConfig{
-			GSIPort: 4000,
-			MaxPort: 4999,
+			GSIPort:    9090,
+			MaxGSIPort: 9099,
 		},
 		Corpus: CorpusConfig{
 			FilePath:      "Messages.txt",
@@ -143,10 +143,10 @@ func LoadOrCreate(path string) (*Config, error) {
 
 	// 字段归一化与兜底
 	if cfg.Network.GSIPort <= 0 {
-		cfg.Network.GSIPort = 4000
+		cfg.Network.GSIPort = 9090
 	}
-	if cfg.Network.MaxPort < cfg.Network.GSIPort {
-		cfg.Network.MaxPort = 4999
+	if cfg.Network.MaxGSIPort < cfg.Network.GSIPort {
+		cfg.Network.MaxGSIPort = 9099
 	}
 	if cfg.Chat.DeathDelayMs <= 0 {
 		cfg.Chat.DeathDelayMs = 555

@@ -29,10 +29,10 @@ type Server struct {
 
 func NewServer(startPort, maxPort int) *Server {
 	if startPort <= 0 {
-		startPort = 4000
+		startPort = 9090
 	}
 	if maxPort < startPort {
-		maxPort = 4999
+		maxPort = 9099
 	}
 
 	return &Server{

@@ -106,8 +106,8 @@ func main() {
 	// 5. 初始化核心业务状态机
 	eng := state.NewEngine(cfg, cm, drv)
 
-	// 6. 启动 GSI HTTP 服务端 (在 [gsi_port, max_port] 自动寻找可用端口)
-	gsiSrv := gsi.NewServer(cfg.Network.GSIPort, cfg.Network.MaxPort)
+	// 6. 启动 GSI HTTP 服务端 (在 [gsi_port, max_gsi_port] 自动寻找可用端口)
+	gsiSrv := gsi.NewServer(cfg.Network.GSIPort, cfg.Network.MaxGSIPort)
 	actualPort, err := gsiSrv.Start()
 	if err != nil {
 		log.Fatalf("❌ GSI 服务启动失败: %v", err)

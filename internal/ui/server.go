@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os/exec"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -185,13 +186,25 @@ func (s *UIServer) handleCorpus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *UIServer) handleTestSay(w http.ResponseWriter, r *http.Request) {
-	go func() {
+	// 提前在当前请求时抽取一条借口返回给前端提示
+	msg, _, _ := s.corpus.Next()
+
+	go func(excuse string) {
 		time.Sleep(3 * time.Second)
-		_, _ = s.engine.ManualTrigger()
-	}()
+		if s.driver != nil {
+			chatKey := "y"
+			if strings.ToLower(s.cfg.Chat.Channel) == "team" {
+				chatKey = "u"
+			}
+			_ = s.driver.SendChatMessage(chatKey, excuse, s.cfg.Chat.KeyIntervalMs)
+		}
+	}(msg)
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]any{"success": true})
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"success": true,
+		"message": msg,
+	})
 }
 
 func (s *UIServer) handleInstallGSI(w http.ResponseWriter, r *http.Request) {

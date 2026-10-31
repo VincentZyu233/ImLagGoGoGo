@@ -18,7 +18,7 @@ func OpenNativeWindow(url string) error {
 	for _, bin := range []string{"google-chrome", "chromium", "chromium-browser"} {
 		if path, err := exec.LookPath(bin); err == nil {
 			appArg := "--app=" + url
-			return exec.Command(path, appArg, "--window-size=900,600").Start()
+			return exec.Command(path, appArg, "--window-size=999,666").Start()
 		}
 	}
 	return exec.Command("xdg-open", url).Start()

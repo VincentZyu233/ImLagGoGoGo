@@ -62,7 +62,7 @@ func OpenNativeWindow(url string) error {
 	}
 
 	appArg := fmt.Sprintf("--app=%s", url)
-	windowSizeArg := "--window-size=900,600"
+	windowSizeArg := "--window-size=999,666"
 
 	cmd := exec.Command(
 		edgePath,
@@ -75,7 +75,7 @@ func OpenNativeWindow(url string) error {
 	}
 
 	// 异步居中调整
-	go centerAndResizeWindow(900, 600)
+	go centerAndResizeWindow(999, 666)
 
 	return nil
 }

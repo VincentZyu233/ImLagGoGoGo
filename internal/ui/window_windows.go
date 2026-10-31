@@ -106,7 +106,7 @@ func centerAndResizeWindow(width, height int) {
 			procGetWindowText.Call(hwnd, uintptr(unsafe.Pointer(&titleBuf[0])), 256)
 			title := syscall.UTF16ToString(titleBuf[:])
 
-			if title == "IMLAG GOGOGO" || title == "ImLagGoGoGo" || len(title) > 0 && title[:5] == "ImLag" {
+			if title == "IMLAG GOGOGO" || title == "ImLagGoGoGo" || (len(title) >= 5 && title[:5] == "ImLag") {
 				foundHwnd = hwnd
 				return 0 // stop
 			}

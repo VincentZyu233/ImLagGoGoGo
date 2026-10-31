@@ -23,17 +23,58 @@ import (
 
 func main() {
 	configPath := flag.String("config", "", "指定 config.toml 路径")
-	showConsole := flag.Bool("console", false, "是否挂载控制台黑框打印调试日志")
-	debug := flag.Bool("debug", false, "是否开启 debug 模式")
-	silent := flag.Bool("silent", false, "是否静默启动 (仅托盘常驻，不自动弹窗)")
+
+	// 三维行为矩阵 Flags (默认 nil，用于判断命令行是否显式传入)
+	flagConsole := flag.Bool("console", false, "是否挂载/打开原生控制台黑框 (默认 false)")
+	flagBrowser := flag.Bool("browser", false, "是否调用系统默认浏览器打开 WebUI (默认 false)")
+	flagWindow := flag.Bool("window", true, "是否打开独立精简战术 App 窗口 (默认 true)")
+
+	debug := flag.Bool("debug", false, "是否开启 debug 模式 (等同于 --console)")
+	silent := flag.Bool("silent", false, "是否静默启动 (等同于 --window=false --browser=false)")
 	flag.Parse()
 
-	// 1. 根据参数判断是否挂载控制台窗口 (默认无黑框)
-	ui.EnsureConsole(*showConsole || *debug)
+	// 2. 加载配置
+	cfg, err := config.LoadOrCreate(*configPath)
+	if err != nil {
+		log.Fatalf("❌ 加载配置失败: %v", err)
+	}
+
+	// 3. 计算行为矩阵 (CLI Flags 优先级高于 config.toml)
+	openConsole := cfg.UI.OpenConsole
+	openBrowser := cfg.UI.OpenBrowser
+	openWindow := cfg.UI.OpenWindow
+
+	// 检查命令行是否显式指定了参数
+	flag.Visit(func(f *flag.Flag) {
+		switch f.Name {
+		case "console":
+			openConsole = *flagConsole
+		case "browser":
+			openBrowser = *flagBrowser
+		case "window":
+			openWindow = *flagWindow
+		case "debug":
+			if *debug {
+				openConsole = true
+			}
+		case "silent":
+			if *silent {
+				openWindow = false
+				openBrowser = false
+			}
+		}
+	})
+
+	if *debug {
+		openConsole = true
+	}
+
+	// 1. 根据行为矩阵判断是否挂载控制台窗口
+	ui.EnsureConsole(openConsole)
 
 	if logFile, err := os.OpenFile("imlag.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
 		defer logFile.Close()
-		if *showConsole || *debug {
+		if openConsole {
 			log.SetOutput(io.MultiWriter(os.Stdout, logFile))
 		} else {
 			log.SetOutput(logFile)
@@ -43,12 +84,6 @@ func main() {
 	log.Println("==================================================")
 	log.Printf("🎮 ImLagGoGoGo v%s - CS2 死后全自动狡辩系统 启动中...", config.Version)
 	log.Println("==================================================")
-
-	// 2. 加载配置
-	cfg, err := config.LoadOrCreate(*configPath)
-	if err != nil {
-		log.Fatalf("❌ 加载配置失败: %v", err)
-	}
 
 	// 3. 加载脱罪词库 (带智能转码与洗牌池)
 	cm, err := corpus.NewCorpusManager(
@@ -107,8 +142,14 @@ func main() {
 		uiURL := fmt.Sprintf("http://127.0.0.1:%d", uiPort)
 		log.Printf("🌐 UI 控制面板已就绪: %s", uiURL)
 
-		if !*silent {
+		// 根据展现形态矩阵呼出窗口
+		if openWindow {
+			log.Println("🖥️ 正在呼出独立 App 战术小窗口...")
 			_ = ui.OpenNativeWindow(uiURL)
+		}
+		if openBrowser {
+			log.Println("🌐 正在使用系统默认浏览器打开 WebUI...")
+			_ = ui.OpenDefaultBrowser(uiURL)
 		}
 	}
 

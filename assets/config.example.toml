@@ -85,3 +85,9 @@ close_action = "ask"
 
 # 开机静默启动到托盘 (默认 false，可在设置中勾选开启)
 auto_start = false
+
+# 启动界面展现形态矩阵 (默认: 0, 0, 1):
+# 也可通过命令行参数 --console / --browser / --window 动态覆盖
+open_console = false  # 是否打开控制台黑框打印日志 (默认 false)
+open_browser = false  # 是否调用系统默认浏览器打开 WebUI (默认 false)
+open_window  = true   # 是否打开独立战术 App 窗口 (默认 true)

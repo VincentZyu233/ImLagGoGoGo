@@ -57,6 +57,11 @@ type UIConfig struct {
 	CloseAction string `toml:"close_action"` // "ask", "minimize", "exit"
 	AutoStart   bool   `toml:"auto_start"`   // 默认 false
 	CS2Path     string `toml:"cs2_path"`     // 自定义 CS2 根路径 (可选)
+
+	// 行为矩阵：展现形态配置
+	OpenConsole bool `toml:"open_console"` // 是否挂载原生控制台黑框 (默认 false)
+	OpenBrowser bool `toml:"open_browser"` // 是否调用系统默认浏览器打开 (默认 false)
+	OpenWindow  bool `toml:"open_window"`  // 是否打开独立战术 App 窗口 (默认 true)
 }
 
 func DefaultConfig() Config {
@@ -90,6 +95,9 @@ func DefaultConfig() Config {
 			CloseAction: "ask",
 			AutoStart:   false,
 			CS2Path:     "",
+			OpenConsole: false,
+			OpenBrowser: false,
+			OpenWindow:  true,
 		},
 	}
 }

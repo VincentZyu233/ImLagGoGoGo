@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"syscall"
 	"time"
 	"unsafe"
@@ -24,6 +23,8 @@ var (
 	procEnumWindows              = user32Dll.NewProc("EnumWindows")
 	procGetWindowThreadProcessId = user32Dll.NewProc("GetWindowThreadProcessId")
 	procIsWindowVisible          = user32Dll.NewProc("IsWindowVisible")
+	procGetClassName             = user32Dll.NewProc("GetClassNameW")
+	procGetWindowText            = user32Dll.NewProc("GetWindowTextW")
 )
 
 const attachParentProcess = ^uintptr(0)
@@ -47,49 +48,40 @@ func EnsureConsole(enable bool) {
 	os.Stdin, _ = os.OpenFile("CONIN$", os.O_RDONLY, 0644)
 }
 
-// OpenNativeWindow 打开独立 App 桌面窗口，并强制执行独立沙盒与居中锁定
+// OpenDefaultBrowser 使用操作系统默认浏览器打开 WebUI 页面
+func OpenDefaultBrowser(url string) error {
+	cmd := exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	return cmd.Start()
+}
+
+// OpenNativeWindow 打开精简的独立 App 桌面窗口
 func OpenNativeWindow(url string) error {
-	// Windows 10/11 默认自带 Edge
 	edgePath := `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`
 	if _, err := os.Stat(edgePath); err != nil {
 		edgePath = `C:\Program Files\Microsoft\Edge\Application\msedge.exe`
 	}
 
-	// 1. 独立数据目录沙盒 (防止被正在运行的系统 Edge 劫持并恢复拉长的窗口高度)
-	localAppData := os.Getenv("LOCALAPPDATA")
-	if localAppData == "" {
-		localAppData = os.TempDir()
-	}
-	profileDir := filepath.Join(localAppData, "ImLagGoGoGo", "ui_profile")
-	_ = os.MkdirAll(profileDir, 0755)
-
 	appArg := fmt.Sprintf("--app=%s", url)
-	dataDirArg := fmt.Sprintf("--user-data-dir=%s", profileDir)
 	windowSizeArg := "--window-size=760,500"
 
 	cmd := exec.Command(
 		edgePath,
 		appArg,
-		dataDirArg,
 		windowSizeArg,
-		"--no-first-run",
-		"--no-default-browser-check",
 	)
 
 	if err := cmd.Start(); err != nil {
 		return err
 	}
 
-	// 2. 异步在后台精准居中并校准窗口大小
-	if cmd.Process != nil {
-		go centerAndResizeWindow(cmd.Process.Pid, 760, 500)
-	}
+	// 异步居中调整
+	go centerAndResizeWindow(760, 500)
 
 	return nil
 }
 
 // centerAndResizeWindow 屏幕居中并将窗口精确锁定为 width x height
-func centerAndResizeWindow(targetPid int, width, height int) {
+func centerAndResizeWindow(width, height int) {
 	screenWidth, _, _ := procGetSystemMetrics.Call(0)  // SM_CXSCREEN
 	screenHeight, _, _ := procGetSystemMetrics.Call(1) // SM_CYSCREEN
 	if screenWidth == 0 || screenHeight == 0 {
@@ -99,7 +91,7 @@ func centerAndResizeWindow(targetPid int, width, height int) {
 	x := (int(screenWidth) - width) / 2
 	y := (int(screenHeight) - height) / 2
 
-	// 在 3 秒内轮询查找 Edge 创建的主窗口并进行居中调整
+	// 在 3 秒内轮询查找 Edge 独立的 App 窗口
 	for i := 0; i < 30; i++ {
 		time.Sleep(100 * time.Millisecond)
 		var foundHwnd uintptr
@@ -110,11 +102,13 @@ func centerAndResizeWindow(targetPid int, width, height int) {
 				return 1 // continue
 			}
 
-			var wndPid uint32
-			procGetWindowThreadProcessId.Call(hwnd, uintptr(unsafe.Pointer(&wndPid)))
-			if int(wndPid) == targetPid {
+			var titleBuf [256]uint16
+			procGetWindowText.Call(hwnd, uintptr(unsafe.Pointer(&titleBuf[0])), 256)
+			title := syscall.UTF16ToString(titleBuf[:])
+
+			if title == "IMLAG GOGOGO" || title == "ImLagGoGoGo" || len(title) > 0 && title[:5] == "ImLag" {
 				foundHwnd = hwnd
-				return 0 // stop enum
+				return 0 // stop
 			}
 			return 1
 		})

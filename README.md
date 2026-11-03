@@ -8,6 +8,24 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%20x64%20%7C%20Linux%20(WIP)-blue)](https://github.com/VincentZyu233/ImLagGoGoGo)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+<br/>
+
+<img src="docs/images/preview-chat-in-game.png" width="70%" alt="CS2 游戏内死后全自动狡辩实测" />
+
+*“跑射也能秒我？跳ping了！眼睛眨了一下！微信弹窗把我切出去了...”*
+
+</div>
+
+---
+
+## 📸 界面与实机预览 (Screenshots)
+
+<div align="center">
+
+| 🎮 游戏内实测公屏狡辩 | 🖥️ CS2 原生战术沉浸风控制面板 |
+| :---: | :---: |
+| <img src="docs/images/preview-chat-in-game.png" width="100%" /> | <img src="docs/images/preview-webui.png" width="100%" /> |
+
 </div>
 
 ---

@@ -5,7 +5,7 @@
 **极轻量、防吞字、CS2 战术沉浸风的死后全自动狡辩工具 (Go 重构版)**
 
 [![Go Version](https://img.shields.io/badge/Go-1.24-00ADD8?logo=go&logoColor=white)](https://golang.org)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20x64%20%7C%20Linux%20(WIP)-blue)](https://github.com/VincentZyuApps/ImLagGoGoGo)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20x64%20%7C%20Linux%20(WIP)-blue)](https://github.com/VincentZyu233/ImLagGoGoGo)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
@@ -28,7 +28,7 @@
 - 🎴 **洗牌池抽样 (Shuffle Deck)**：独创无放回随机洗牌算法，一整套词库借口全部说完前绝不连发重复词，拒绝当“复读机”。
 - ⏱️ **555ms 死亡拟真延迟缓冲**：死后智能微停顿 555ms，避开游戏死亡特写与按键惯性，体感逼真不吞键。
 - 🔀 **全自动 / 纯手动 / 二者兼有 (Both) 三模支持**：死后自动发 + 手动按键绑定随时发，共享同一套词库池。
-- 🔌 **智能 GSI 端口冲突避让**：默认 4000 端口被占时，自动顺延探测（4001 ~ 4999）并全自动重写 CS2 配置，用户完全零感知。
+- 🔌 **智能 GSI 端口冲突避让**：默认 9090 (gogo) 端口被占时，自动顺延探测（9090 ~ 9099）并全自动重写 CS2 配置，用户完全零感知。
 - 📂 **Steam 库全盘自动寻路 + 手动文件选择器兜底**：全自动递归 Steam 多硬盘游戏库部署 GSI，亦支持通过系统弹窗手动指定 CS2 路径。
 - 📝 **文本词库自动热监听 + 智能编码嗅探**：支持记事本直接修改 `Messages.txt`，保存瞬间自动无感生效；内置编码嗅探，自动适配 UTF-8 / GBK / ANSI，绝不出现乱码。
 
@@ -37,7 +37,7 @@
 ## 🛠️ 快速开始
 
 ### 1. 下载即用
-从 [Releases 页面](https://github.com/VincentZyuApps/ImLagGoGoGo/releases) 下载最新的绿色便携压缩包，解压后双击 `imlag.exe` 即可运行。
+从 [Releases 页面](https://github.com/VincentZyu233/ImLagGoGoGo/releases) 下载最新的绿色便携压缩包，解压后双击 `imlag-gogo.exe` 即可运行。
 
 ### 2. 初始配置
 首次运行会在同级目录下自动生成 `config.toml` 与 `Messages.txt`：

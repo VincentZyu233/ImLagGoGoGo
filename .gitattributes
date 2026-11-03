@@ -1,0 +1,3 @@
+# 让 Markdown 计入 GitHub 语言统计 (GitHub Linguist)
+*.md linguist-detectable=true
+*.md linguist-documentation=false

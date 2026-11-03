@@ -2,6 +2,7 @@ package state
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -138,6 +139,7 @@ func (e *Engine) ProcessPayload(payload *gsi.GSIPayload) {
 
 		// 校验前台窗口 (如果开启了窗口检测)
 		if checkForeground && e.driver != nil && !e.driver.IsCS2Foreground() {
+			log.Println("⚠️ [前台拦截] 当前活动前台窗口并非 cs2.exe，已跳过注入。如需在后台强制注入，可在 config.toml 设置 check_foreground = false")
 			return
 		}
 
@@ -150,9 +152,13 @@ func (e *Engine) ProcessPayload(payload *gsi.GSIPayload) {
 			chatKey = "u"
 		}
 
+		log.Printf("🎯 [阵亡狡辩] 玩家 %s 阵亡，准备投递借口...", playerName)
+
 		// 执行键盘模拟注入
 		if e.driver != nil {
-			_ = e.driver.SendChatMessage(chatKey, msg, e.cfg.Chat.KeyIntervalMs)
+			if err := e.driver.SendChatMessage(chatKey, msg, e.cfg.Chat.KeyIntervalMs); err != nil {
+				log.Printf("❌ 模拟注入失败: %v", err)
+			}
 		}
 
 		// 记录事件与上报回调

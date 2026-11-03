@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/sys/windows"
+
 	"github.com/VincentZyuApps/ImLagGoGoGo/assets"
 	"github.com/VincentZyuApps/ImLagGoGoGo/internal/config"
 	"github.com/VincentZyuApps/ImLagGoGoGo/internal/corpus"
@@ -84,6 +86,10 @@ func main() {
 	log.Println("==================================================")
 	log.Printf("🎮 ImLagGoGoGo v%s - CS2 死后全自动狡辩系统 启动中...", config.Version)
 	log.Println("==================================================")
+
+	if !isElevated() {
+		log.Println("💡 [权限提示] 当前以普通权限运行。若 CS2 以管理员权限运行，模拟按键可能会被 Windows UIPI 拦截；如遇按键无效请以管理员身份启动终端。")
+	}
 
 	// 3. 加载脱罪词库 (带智能转码与洗牌池)
 	cm, err := corpus.NewCorpusManager(
@@ -249,4 +255,14 @@ func onSystrayReady(cfg *config.Config, cm *corpus.CorpusManager, eng *state.Eng
 		systray.Quit()
 		os.Exit(0)
 	})
+}
+
+func isElevated() bool {
+	var token windows.Token
+	err := windows.OpenProcessToken(windows.CurrentProcess(), windows.TOKEN_QUERY, &token)
+	if err != nil {
+		return false
+	}
+	defer token.Close()
+	return token.IsElevated()
 }

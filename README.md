@@ -5,6 +5,9 @@
 **🎮 CS2死后全自动狡辩工具 (Go 重构版) ⚡ 极轻量、纯静态单文件 🚀**
 
 [![Go Version](https://img.shields.io/badge/Go-1.24-00ADD8?logo=go&logoColor=white)](https://golang.org)
+[![Top Language](https://img.shields.io/github/languages/top/VincentZyu233/ImLagGoGoGo?style=flat&logo=go&logoColor=white)](https://github.com/VincentZyu233/ImLagGoGoGo)
+[![Language Count](https://img.shields.io/github/languages/count/VincentZyu233/ImLagGoGoGo?style=flat)](https://github.com/VincentZyu233/ImLagGoGoGo)
+[![Repo Size](https://img.shields.io/github/repo-size/VincentZyu233/ImLagGoGoGo?style=flat)](https://github.com/VincentZyu233/ImLagGoGoGo)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20x64%20%7C%20Linux%20(WIP)-blue)](https://github.com/VincentZyu233/ImLagGoGoGo)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -22,9 +25,25 @@
 
 <div align="center">
 
-| 🎮 游戏内实测公屏狡辩 | 🖥️ CS2 原生战术沉浸风控制面板 |
+| 🎮 游戏内公屏狡辩实况 (实录 1) | 🎮 游戏内公屏狡辩实况 (实录 2) |
 | :---: | :---: |
-| <img src="docs/images/preview-chat-in-game.png" width="100%" /> | <img src="docs/images/preview-webui.png" width="100%" /> |
+| <img src="docs/images/preview-chat-in-game.png" width="100%" alt="游戏内实测 1" /> | <img src="docs/images/preview-chat-in-game-2.png" width="100%" alt="游戏内实测 2" /> |
+| *“跑射也能秒我？跳ping了！眼睛眨了一下...”* | *“感冒了没反应！拆消音器去了！状态不行...”* |
+
+<br/>
+
+### 🖥️ CS2 原生战术沉浸风控制面板
+<img src="docs/images/preview-webui.png" width="85%" alt="战术控制面板" />
+
+</div>
+
+---
+
+## 📊 语言统计 (Language Stats)
+
+<div align="center">
+
+[![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=VincentZyu233&repo=ImLagGoGoGo&layout=compact&theme=dark&hide_border=true)](https://github.com/VincentZyu233/ImLagGoGoGo)
 
 </div>
 

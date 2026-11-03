@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -132,11 +133,26 @@ func main() {
 		} else {
 			log.Println("✅ CS2 GSI 配置文件已全自动部署到游戏目录")
 		}
+
+		// 自动部署 CS2 原生 CFG 借口轮换链 (方案 A: 极速原生 say)
+		allMsgs := cm.AllMessages()
+		if len(allMsgs) > 0 {
+			bindKeys := []string{cfg.Chat.CFGBindKey, cfg.Chat.CFGTeamBindKey}
+			if err := drv.WriteSelectorCfg(allMsgs, bindKeys); err != nil {
+				log.Printf("⚠️ 部署 CFG 轮换链提示: %v", err)
+			} else {
+				log.Printf("⚡ CS2 原生 CFG 借口链已部署 (方案 A 默认启用 | 全局键: [%s], 队内键: [%s])",
+					strings.ToUpper(cfg.Chat.CFGBindKey), strings.ToUpper(cfg.Chat.CFGTeamBindKey))
+				if drv.IsCS2Running() {
+					log.Println("💡 [免重启提示] 检测到 CS2 正在运行中，在游戏控制台输入一次: exec autoexec 即可瞬间生效新 CFG！")
+				}
+			}
+		}
 	}
 
 	// 7. 启动词库文件热监听 (fsnotify)
 	if cfg.Corpus.WatchFile {
-		startCorpusWatcher(cfg.Corpus.FilePath, cm)
+		startCorpusWatcher(cfg.Corpus.FilePath, cm, drv, cfg)
 	}
 
 	// 8. 启动本地 CS2 Panorama 风格 UI 界面
@@ -178,7 +194,7 @@ func main() {
 	systray.Quit()
 }
 
-func startCorpusWatcher(filePath string, cm *corpus.CorpusManager) {
+func startCorpusWatcher(filePath string, cm *corpus.CorpusManager, drv driver.Driver, cfg *config.Config) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return
@@ -202,6 +218,14 @@ func startCorpusWatcher(filePath string, cm *corpus.CorpusManager) {
 						_ = cm.Reload()
 						total, _ := cm.GetStats()
 						log.Printf("🔄 词库已自动热重载，当前借口数: %d", total)
+						// 同步热更新 CS2 CFG 轮换链
+						if drv != nil {
+							allMsgs := cm.AllMessages()
+							if len(allMsgs) > 0 {
+								bindKeys := []string{cfg.Chat.CFGBindKey, cfg.Chat.CFGTeamBindKey}
+								_ = drv.WriteSelectorCfg(allMsgs, bindKeys)
+							}
+						}
 					}
 				}
 			case <-watcher.Errors:

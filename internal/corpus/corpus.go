@@ -129,6 +129,15 @@ func (cm *CorpusManager) Reload() error {
 	return nil
 }
 
+// AllMessages 获取当前所有有效借口语句的副本
+func (cm *CorpusManager) AllMessages() []string {
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
+	res := make([]string, len(cm.messages))
+	copy(res, cm.messages)
+	return res
+}
+
 // Next 获取下一条借口语句
 func (cm *CorpusManager) Next() (string, int, int) {
 	cm.mu.Lock()

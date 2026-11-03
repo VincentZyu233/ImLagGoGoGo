@@ -143,21 +143,47 @@ func (e *Engine) ProcessPayload(payload *gsi.GSIPayload) {
 			return
 		}
 
-		// 从洗牌池提取一条借口
+		// 从洗牌池提取一条借口 (供历史记录和回调上报)
 		msg, _, _ := e.corpus.Next()
 
-		// 决定聊天按键
-		chatKey := "y"
-		if strings.ToLower(channel) == "team" {
-			chatKey = "u"
+		method := strings.ToLower(e.cfg.Chat.Method)
+		if method == "" {
+			method = "cfg"
 		}
 
-		log.Printf("🎯 [阵亡狡辩] 玩家 %s 阵亡，准备投递借口...", playerName)
+		if method == "cfg" {
+			// ==========================================
+			// 方案 A (默认/最稳): CS2 原生 CFG 模式
+			// ==========================================
+			bindKey := e.cfg.Chat.CFGBindKey
+			if strings.ToLower(channel) == "team" {
+				bindKey = e.cfg.Chat.CFGTeamBindKey
+			}
+			if bindKey == "" {
+				bindKey = "k"
+			}
 
-		// 执行键盘模拟注入
-		if e.driver != nil {
-			if err := e.driver.SendChatMessage(chatKey, msg, e.cfg.Chat.KeyIntervalMs); err != nil {
-				log.Printf("❌ 模拟注入失败: %v", err)
+			log.Printf("🎯 [阵亡狡辩] 玩家 %s 阵亡 (方案 A: 原生 CFG 模式)", playerName)
+			if e.driver != nil {
+				if err := e.driver.PressSingleKey(bindKey); err != nil {
+					log.Printf("❌ CFG 触发键模拟失败: %v", err)
+				} else {
+					log.Printf("✅ CS2 原生 say 命令已通过引擎按键 [%s] 极速打出！", strings.ToUpper(bindKey))
+				}
+			}
+		} else {
+			// ==========================================
+			// 方案 B: 模拟输入模式 (传统聊天框+剪贴板)
+			// ==========================================
+			chatKey := "y"
+			if strings.ToLower(channel) == "team" {
+				chatKey = "u"
+			}
+			log.Printf("🎯 [阵亡狡辩] 玩家 %s 阵亡 (方案 B: 模拟输入模式)", playerName)
+			if e.driver != nil {
+				if err := e.driver.SendChatMessage(chatKey, msg, e.cfg.Chat.KeyIntervalMs); err != nil {
+					log.Printf("❌ 模拟注入失败: %v", err)
+				}
 			}
 		}
 
@@ -190,6 +216,27 @@ func (e *Engine) ProcessPayload(payload *gsi.GSIPayload) {
 // ManualTrigger 手动一键触发狡辩 (供测试按钮或绑定快捷键调用)
 func (e *Engine) ManualTrigger() (string, error) {
 	msg, _, _ := e.corpus.Next()
+	method := strings.ToLower(e.cfg.Chat.Method)
+	if method == "" {
+		method = "cfg"
+	}
+
+	if method == "cfg" {
+		bindKey := e.cfg.Chat.CFGBindKey
+		if strings.ToLower(e.cfg.Chat.Channel) == "team" {
+			bindKey = e.cfg.Chat.CFGTeamBindKey
+		}
+		if bindKey == "" {
+			bindKey = "k"
+		}
+		if e.driver != nil {
+			if err := e.driver.PressSingleKey(bindKey); err != nil {
+				return msg, fmt.Errorf("press cfg key: %w", err)
+			}
+		}
+		return msg, nil
+	}
+
 	chatKey := "y"
 	if strings.ToLower(e.cfg.Chat.Channel) == "team" {
 		chatKey = "u"

@@ -13,9 +13,10 @@ type WindowTracker interface {
 	IsCS2Running() bool
 }
 
-// InputInjector 负责向游戏窗口模拟按键与注入 Unicode 借口文字
+// InputInjector 负责向游戏窗口模拟按键与注入借口文字
 type InputInjector interface {
 	SendChatMessage(chatKey string, message string, delayMs int) error
+	PressSingleKey(key string) error
 }
 
 // CfgLocator 负责探测 CS2 路径并自动生成部署 GSI 与 CFG 配置文件

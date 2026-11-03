@@ -12,14 +12,16 @@ type GsiConfigWriter struct {
 }
 
 func NewGsiConfigWriter(locator *CS2Locator) *GsiConfigWriter {
-	return &GsiConfigWriter{locator: locator}
+	return &GsiConfigWriter{
+		locator: locator,
+	}
 }
 
-// InstallGSIConfig 向 CS2 安装/更新 gamestate_integration_imlag.cfg
+// InstallGSIConfig 自动向 CS2 的 cfg 目录写入 gamestate_integration_imlag.cfg
 func (w *GsiConfigWriter) InstallGSIConfig(listenPort int) error {
 	cs2Path, err := w.locator.LocateCS2Path()
 	if err != nil {
-		return fmt.Errorf("locate cs2: %w", err)
+		return fmt.Errorf("locate cs2 path: %w", err)
 	}
 
 	cfgDir := filepath.Join(cs2Path, "game", "csgo", "cfg")
@@ -29,21 +31,22 @@ func (w *GsiConfigWriter) InstallGSIConfig(listenPort int) error {
 
 	cfgPath := filepath.Join(cfgDir, "gamestate_integration_imlag.cfg")
 
-	content := fmt.Sprintf(`"ImLag GSI Integration v3.0"
+	content := fmt.Sprintf(`"ImLag GSI Integration"
 {
-    "uri" "http://127.0.0.1:%d"
-    "timeout" "5.0"
-    "buffer"  "0.1"
-    "throttle" "0.1"
-    "heartbeat" "10.0"
+    "uri"           "http://127.0.0.1:%d/"
+    "timeout"       "5.0"
+    "buffer"        "0.1"
+    "throttle"      "0.2"
+    "heartbeat"     "30.0"
     "data"
     {
-        "provider"            "1"
-        "map"                 "1"
-        "round"               "1"
-        "player_id"           "1"
-        "player_state"        "1"
-        "previously"          "1"
+        "provider"              "1"
+        "map"                   "1"
+        "round"                 "1"
+        "player_id"             "1"
+        "player_state"          "1"
+        "player_weapons"        "1"
+        "player_match_stats"    "1"
     }
 }
 `, listenPort)
@@ -51,7 +54,7 @@ func (w *GsiConfigWriter) InstallGSIConfig(listenPort int) error {
 	return os.WriteFile(cfgPath, []byte(content), 0644)
 }
 
-// WriteSelectorCfg 生成游戏内手动轮换 say 脚本，并自动绑定到 autoexec.cfg
+// WriteSelectorCfg 生成方案 A 所需的 CS2 原生 say 脚本轮换体系 (支持全服与队内双通道轮换)
 func (w *GsiConfigWriter) WriteSelectorCfg(messages []string, bindKeys []string) error {
 	if len(messages) == 0 {
 		return nil
@@ -67,31 +70,62 @@ func (w *GsiConfigWriter) WriteSelectorCfg(messages []string, bindKeys []string)
 		return fmt.Errorf("create cfg directory: %w", err)
 	}
 
-	maxCfg := min(len(messages), 100)
-	for i := 0; i < maxCfg; i++ {
-		nextIndex := (i + 1) % maxCfg + 1
-		cfgName := fmt.Sprintf("imlag_say_%d.cfg", i+1)
-		fullPath := filepath.Join(cfgDir, cfgName)
+	total := min(len(messages), 150)
 
+	// 1. 生成全局 say 文件 (imlag_say_global_X.cfg)
+	for i := 0; i < total; i++ {
+		cfgName := fmt.Sprintf("imlag_say_global_%d.cfg", i+1)
+		fullPath := filepath.Join(cfgDir, cfgName)
 		safeMsg := strings.ReplaceAll(messages[i], `"`, `'`)
-		data := fmt.Sprintf("say \"%s\"\nalias imlag_random_say \"exec imlag_say_%d.cfg\"\n", safeMsg, nextIndex)
+		data := fmt.Sprintf("// ImLag Global Say %d\nsay \"%s\"\n", i+1, safeMsg)
 		_ = os.WriteFile(fullPath, []byte(data), 0644)
 	}
 
-	// 生成选择器入口
-	selectorPath := filepath.Join(cfgDir, "imlag_say_selector.cfg")
-	selectorContent := "imlag_random_say\n"
-	_ = os.WriteFile(selectorPath, []byte(selectorContent), 0644)
-
-	// 挂载到 autoexec.cfg
-	if len(bindKeys) > 0 {
-		w.injectAutoexec(cfgDir, bindKeys)
+	// 2. 生成队内 say 文件 (imlag_say_team_X.cfg)
+	for i := 0; i < total; i++ {
+		cfgName := fmt.Sprintf("imlag_say_team_%d.cfg", i+1)
+		fullPath := filepath.Join(cfgDir, cfgName)
+		safeMsg := strings.ReplaceAll(messages[i], `"`, `'`)
+		data := fmt.Sprintf("// ImLag Team Say %d\nsay_team \"%s\"\n", i+1, safeMsg)
+		_ = os.WriteFile(fullPath, []byte(data), 0644)
 	}
+
+	// 3. 生成全局选择器循环链 (imlag_say_global_selector.cfg)
+	var globalLines []string
+	globalLines = append(globalLines, "// ImLag Global Selector")
+	for i := 1; i <= total; i++ {
+		next := i%total + 1
+		globalLines = append(globalLines, fmt.Sprintf("alias imlag_global_say_%d \"exec imlag_say_global_%d; alias imlag_do_global_say imlag_global_say_%d\"", i, i, next))
+	}
+	globalLines = append(globalLines, "alias imlag_do_global_say imlag_global_say_1")
+	_ = os.WriteFile(filepath.Join(cfgDir, "imlag_say_global_selector.cfg"), []byte(strings.Join(globalLines, "\n")+"\n"), 0644)
+
+	// 4. 生成队内选择器循环链 (imlag_say_team_selector.cfg)
+	var teamLines []string
+	teamLines = append(teamLines, "// ImLag Team Selector")
+	for i := 1; i <= total; i++ {
+		next := i%total + 1
+		teamLines = append(teamLines, fmt.Sprintf("alias imlag_team_say_%d \"exec imlag_say_team_%d; alias imlag_do_team_say imlag_team_say_%d\"", i, i, next))
+	}
+	teamLines = append(teamLines, "alias imlag_do_team_say imlag_team_say_1")
+	_ = os.WriteFile(filepath.Join(cfgDir, "imlag_say_team_selector.cfg"), []byte(strings.Join(teamLines, "\n")+"\n"), 0644)
+
+	// 5. 挂载到 autoexec.cfg
+	globalKey := "k"
+	teamKey := "l"
+	if len(bindKeys) > 0 && strings.TrimSpace(bindKeys[0]) != "" {
+		globalKey = strings.TrimSpace(bindKeys[0])
+	}
+	if len(bindKeys) > 1 && strings.TrimSpace(bindKeys[1]) != "" {
+		teamKey = strings.TrimSpace(bindKeys[1])
+	}
+
+	w.injectAutoexec(cfgDir, globalKey, teamKey)
 
 	return nil
 }
 
-func (w *GsiConfigWriter) injectAutoexec(cfgDir string, bindKeys []string) {
+func (w *GsiConfigWriter) injectAutoexec(cfgDir string, globalKey, teamKey string) {
 	autoexecPath := filepath.Join(cfgDir, "autoexec.cfg")
 	var lines []string
 	if data, err := os.ReadFile(autoexecPath); err == nil {
@@ -113,7 +147,7 @@ func (w *GsiConfigWriter) injectAutoexec(cfgDir string, bindKeys []string) {
 			inBlock = false
 			continue
 		}
-		if !inBlock && !strings.Contains(line, "exec imlag_say_selector") {
+		if !inBlock && !strings.Contains(line, "imlag_say_") && !strings.Contains(line, "imlag_do_") {
 			filtered = append(filtered, line)
 		}
 	}
@@ -121,13 +155,14 @@ func (w *GsiConfigWriter) injectAutoexec(cfgDir string, bindKeys []string) {
 	filtered = append(filtered, "")
 	filtered = append(filtered, tagStart)
 	filtered = append(filtered, "// Managed automatically by ImLagGoGoGo")
-	for _, k := range bindKeys {
-		k = strings.TrimSpace(k)
-		if k != "" {
-			filtered = append(filtered, fmt.Sprintf("bind \"%s\" \"exec imlag_say_selector\"", k))
-		}
+	filtered = append(filtered, "exec imlag_say_global_selector")
+	filtered = append(filtered, "exec imlag_say_team_selector")
+	if globalKey != "" {
+		filtered = append(filtered, fmt.Sprintf("bind \"%s\" \"imlag_do_global_say\"", strings.ToLower(globalKey)))
 	}
-	filtered = append(filtered, "alias imlag_random_say \"exec imlag_say_1.cfg\"")
+	if teamKey != "" {
+		filtered = append(filtered, fmt.Sprintf("bind \"%s\" \"imlag_do_team_say\"", strings.ToLower(teamKey)))
+	}
 	filtered = append(filtered, tagEnd)
 	filtered = append(filtered, "host_writeconfig")
 	filtered = append(filtered, "")

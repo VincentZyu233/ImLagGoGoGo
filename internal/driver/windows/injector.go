@@ -107,6 +107,17 @@ func SetClipboardText(text string) error {
 	return nil
 }
 
+// PressSingleKey 模拟轻击单个字母或按键 (专用于方案 A: 原生 CFG 模式一键触发 CS2 引擎内部 say 命令)
+func (inj *WindowsInjector) PressSingleKey(key string) error {
+	if len(key) == 0 {
+		return fmt.Errorf("key is empty")
+	}
+	vk := byte(strings.ToUpper(key)[0])
+	log.Printf("⚡ [方案 A - 原生CFG触达] 模拟轻击 CS2 引擎绑定键: [%c]", vk)
+	inj.keyPress(vk, 50*time.Millisecond)
+	return nil
+}
+
 // SendChatMessage 执行完整的打字时序 (100% 对齐原版 C# 经过实战检验的 keybd_event + 剪贴板粘贴方案):
 // 1. 释放所有被物理按住的移动键 (WASD/Shift/Ctrl/Alt/Space)
 // 2. 将借口文本写入系统剪贴板

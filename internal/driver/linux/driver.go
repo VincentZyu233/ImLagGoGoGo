@@ -24,6 +24,10 @@ func (d *LinuxDriver) SendChatMessage(chatKey string, message string, delayMs in
 	return fmt.Errorf("linux input injector is not implemented yet")
 }
 
+func (d *LinuxDriver) PressSingleKey(key string) error {
+	return fmt.Errorf("linux input injector is not implemented yet")
+}
+
 func (d *LinuxDriver) LocateCS2Path() (string, error) {
 	return "", fmt.Errorf("linux cs2 locator is not implemented yet")
 }

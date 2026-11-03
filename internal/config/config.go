@@ -33,11 +33,14 @@ type ModeConfig struct {
 }
 
 type ChatConfig struct {
-	Channel         string `toml:"channel"`          // "all", "team"
-	DeathDelayMs    int    `toml:"death_delay_ms"`   // 默认 555ms
-	KeyIntervalMs   int    `toml:"key_interval_ms"`  // 默认 60ms
-	CheckForeground bool   `toml:"check_foreground"` // 默认 true
-	ToggleHotkey    string `toml:"toggle_hotkey"`    // 默认 "Ctrl+Shift+S"
+	Method          string `toml:"method"`            // 发送方式: "cfg" (方案 A, 原生CFG模式, 推荐/默认), "input" (方案 B, 模拟输入)
+	Channel         string `toml:"channel"`           // "all", "team"
+	DeathDelayMs    int    `toml:"death_delay_ms"`    // 默认 555ms
+	KeyIntervalMs   int    `toml:"key_interval_ms"`   // 默认 60ms
+	CheckForeground bool   `toml:"check_foreground"`  // 默认 true
+	ToggleHotkey    string `toml:"toggle_hotkey"`     // 默认 "Ctrl+Shift+S"
+	CFGBindKey      string `toml:"cfg_bind_key"`      // CFG模式全局发言按键 (默认 "k")
+	CFGTeamBindKey  string `toml:"cfg_team_bind_key"` // CFG模式队内发言按键 (默认 "l")
 }
 
 type NetworkConfig struct {
@@ -74,11 +77,14 @@ func DefaultConfig() Config {
 			BehaviorMode: "both",
 		},
 		Chat: ChatConfig{
+			Method:          "cfg",
 			Channel:         "all",
 			DeathDelayMs:    555,
 			KeyIntervalMs:   60,
 			CheckForeground: true,
 			ToggleHotkey:    "Ctrl+Shift+S",
+			CFGBindKey:      "k",
+			CFGTeamBindKey:  "l",
 		},
 		Network: NetworkConfig{
 			GSIPort:    9090,
@@ -142,6 +148,15 @@ func LoadOrCreate(path string) (*Config, error) {
 	}
 
 	// 字段归一化与兜底
+	if cfg.Chat.Method == "" {
+		cfg.Chat.Method = "cfg"
+	}
+	if cfg.Chat.CFGBindKey == "" {
+		cfg.Chat.CFGBindKey = "k"
+	}
+	if cfg.Chat.CFGTeamBindKey == "" {
+		cfg.Chat.CFGTeamBindKey = "l"
+	}
 	if cfg.Network.GSIPort <= 0 {
 		cfg.Network.GSIPort = 9090
 	}

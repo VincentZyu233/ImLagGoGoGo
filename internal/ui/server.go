@@ -75,11 +75,10 @@ func (s *UIServer) Start() (int, error) {
 	s.listener = l
 	s.port = l.Addr().(*net.TCPAddr).Port
 
-	sub, _ := fs.Sub(assetsFS, "assets")
 	mux := http.NewServeMux()
 
-	// 静态文件服务 (内嵌 index.html)
-	mux.Handle("/", http.FileServer(http.FS(sub)))
+	// 静态文件与单源版本号模板注入
+	mux.HandleFunc("/", s.handleIndex)
 
 	// API 路由
 	mux.HandleFunc("/api/state", s.handleState)
@@ -101,6 +100,24 @@ func (s *UIServer) Start() (int, error) {
 
 func (s *UIServer) Port() int {
 	return s.port
+}
+
+func (s *UIServer) handleIndex(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" && r.URL.Path != "/index.html" {
+		sub, _ := fs.Sub(assetsFS, "assets")
+		http.FileServer(http.FS(sub)).ServeHTTP(w, r)
+		return
+	}
+
+	raw, err := assetsFS.ReadFile("assets/index.html")
+	if err != nil {
+		http.Error(w, "index.html not found", http.StatusNotFound)
+		return
+	}
+
+	rendered := strings.ReplaceAll(string(raw), "{{.Version}}", "v"+config.Version)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = w.Write([]byte(rendered))
 }
 
 func (s *UIServer) handleState(w http.ResponseWriter, r *http.Request) {
@@ -125,6 +142,7 @@ func (s *UIServer) handleState(w http.ResponseWriter, r *http.Request) {
 	cs2Path, _ := s.driver.LocateCS2Path()
 
 	res := map[string]any{
+		"version":        "v" + config.Version,
 		"connected":      s.gsiSrv.IsConnected(),
 		"port":           s.gsiSrv.ActualPort(),
 		"player":         player,

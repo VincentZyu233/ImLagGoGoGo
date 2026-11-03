@@ -455,7 +455,7 @@
     <header>
         <div class="header-title">
             <span>IMLAG GOGOGO</span>
-            <span class="header-badge">v0.0.3</span>
+            <span class="header-badge" id="app-version">{{.Version}}</span>
             <span class="header-badge" style="background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); color: #8e9ca8;">PANORAMA</span>
         </div>
         <div class="nav-tabs">
@@ -690,6 +690,11 @@
                     } else {
                         dot.className = 'status-dot';
                         text.innerText = '等待 CS2 启动并连接 (:' + data.port + ')';
+                    }
+
+                    if (data.version) {
+                        const vBadge = document.getElementById('app-version');
+                        if (vBadge) vBadge.innerText = data.version.startsWith('v') ? data.version : 'v' + data.version;
                     }
 
                     document.getElementById('statPlayer').innerText = data.player || '未就绪';

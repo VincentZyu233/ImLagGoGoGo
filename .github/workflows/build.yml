@@ -34,6 +34,22 @@ jobs:
       - name: Download Go dependencies
         run: go mod download
 
+      - name: Extract Version from Go (Single Source of Truth)
+        shell: pwsh
+        run: |
+          $match = Select-String -Path "internal/config/config.go" -Pattern 'const\s+Version\s*=\s*"([^"]+)"'
+          if (-not $match) {
+            Write-Error "❌ 严重错误: 无法在 internal/config/config.go 中匹配到 const Version，单一版本源解析失败！"
+            exit 1
+          }
+          $ver = $match.Matches[0].Groups[1].Value.Trim()
+          if ([string]::IsNullOrWhiteSpace($ver)) {
+            Write-Error "❌ 严重错误: 从 internal/config/config.go 提取的版本号为空！"
+            exit 1
+          }
+          Write-Host "✅ 成功从 Go 代码提取唯一版本源: v$ver"
+          "APP_VERSION=v$ver" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
       - name: Build & Package
         run: python scripts/build.py --package
 
@@ -49,10 +65,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          $tag = if ($env:GITHUB_REF -like "refs/tags/*") { $env:GITHUB_REF.Substring(10) } else { "v0.0.3" }
+          $tag = $env:APP_VERSION
+          if ([string]::IsNullOrWhiteSpace($tag)) {
+            Write-Error "❌ 无法获取 APP_VERSION 环境变量！"
+            exit 1
+          }
+          if ($env:GITHUB_REF -like "refs/tags/*") {
+            $gitTag = $env:GITHUB_REF.Substring(10)
+            if ($gitTag -ne $tag) {
+              Write-Error "❌ 发布终止: Git Tag ($gitTag) 与 Go 代码 internal/config/config.go 中的版本号 ($tag) 不匹配！"
+              exit 1
+            }
+          }
           gh release delete $tag --yes --cleanup-tag 2>$null || $true
           gh release create $tag `
-            --title "ImLagGoGoGo $tag (CS2 战术死后狡辩系统 - Beta)" `
-            --notes "### 🎮 ImLagGoGoGo $tag (Beta)`n`n基于 Go 1.24 重构，纯静态单二进制，仅约 7MB 体积，原生 CS2 沉浸式战术 UI。`n`n- 彻底杜绝拼音输入法候选框吞字`n- 洗牌池无放回借口轮转`n- 智能端口冲突避让 (4000~4999)`n- 全自动/手动按键双模支持" `
+            --title "ImLagGoGoGo $tag (CS2 战术死后狡辩系统)" `
+            --notes "### 🎮 ImLagGoGoGo $tag`n`n基于 Go 1.24 重构，纯静态单二进制，仅约 7MB 体积，原生 CS2 沉浸式战术 UI。`n`n- 方案 A 原生 CS2 CFG 别名轮换免聊天框瞬间打出`n- 方案 B Win32 硬件扫描码模拟`n- 彻底杜绝拼音输入法候选框吞字`n- 洗牌池无放回借口轮转`n- 智能端口冲突避让 (9090~9099)" `
             --latest `
             dist/ImLagGoGoGo-windows-x64.zip

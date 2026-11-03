@@ -13,6 +13,8 @@ var (
 )
 
 func EnsureConsole(_ bool) {}
+func IsLaunchedFromTerminal() bool { return true }
+func HideConsoleWindow() {}
 
 // OpenDefaultBrowser 在 Linux 上使用默认浏览器打开
 func OpenDefaultBrowser(url string) error {

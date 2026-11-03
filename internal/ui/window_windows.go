@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"syscall"
 	"time"
@@ -14,10 +15,11 @@ import (
 )
 
 var (
-	kernel32Dll          = syscall.NewLazyDLL("kernel32.dll")
-	procAllocConsole     = kernel32Dll.NewProc("AllocConsole")
-	procAttachConsole    = kernel32Dll.NewProc("AttachConsole")
-	procGetConsoleWindow = kernel32Dll.NewProc("GetConsoleWindow")
+	kernel32Dll               = syscall.NewLazyDLL("kernel32.dll")
+	procAllocConsole          = kernel32Dll.NewProc("AllocConsole")
+	procAttachConsole         = kernel32Dll.NewProc("AttachConsole")
+	procGetConsoleWindow      = kernel32Dll.NewProc("GetConsoleWindow")
+	procGetConsoleProcessList = kernel32Dll.NewProc("GetConsoleProcessList")
 
 	user32Dll                    = syscall.NewLazyDLL("user32.dll")
 	procGetSystemMetrics         = user32Dll.NewProc("GetSystemMetrics")
@@ -27,30 +29,60 @@ var (
 	procIsWindowVisible          = user32Dll.NewProc("IsWindowVisible")
 	procGetClassName             = user32Dll.NewProc("GetClassNameW")
 	procGetWindowText            = user32Dll.NewProc("GetWindowTextW")
+	procShowWindow               = user32Dll.NewProc("ShowWindow")
+	procPostMessageW             = user32Dll.NewProc("PostMessageW")
 
 	nativeWindowCmdMu sync.Mutex
 	nativeWindowCmd   *exec.Cmd
+
+	activeWindowHwndMu sync.Mutex
+	activeWindowHwnd   uintptr
 )
 
-const attachParentProcess = ^uintptr(0)
+const (
+	attachParentProcess = ^uintptr(0)
+	swHide              = 0
+	swShow              = 5
+	wmClose             = 0x0010
+)
 
-// EnsureConsole 根据参数在必要时分配或挂载控制台
+// IsLaunchedFromTerminal 判断当前是否由已有的终端（PowerShell / CMD）启动
+func IsLaunchedFromTerminal() bool {
+	var pids [2]uint32
+	ret, _, _ := procGetConsoleProcessList.Call(uintptr(unsafe.Pointer(&pids[0])), 2)
+	return ret > 1
+}
+
+// HideConsoleWindow 隐藏当前进程的控制台黑框
+func HideConsoleWindow() {
+	hwnd, _, _ := procGetConsoleWindow.Call()
+	if hwnd != 0 {
+		procShowWindow.Call(hwnd, uintptr(swHide))
+	}
+}
+
+// EnsureConsole 智能感知并管理控制台窗口
 func EnsureConsole(enable bool) {
-	// 无论是否显式开启，都安装控制台底层处理函数
+	// 无论是否显式开启，都安装 Win32 底层控制台事件拦截器
 	InstallConsoleCtrlHandler()
 
-	if !enable {
+	fromTerminal := IsLaunchedFromTerminal()
+
+	if !enable && !fromTerminal {
+		// 桌面双击启动且用户未指定开启控制台：第一毫秒隐去黑框
+		HideConsoleWindow()
 		return
 	}
 
-	// 优先尝试依附到父进程控制台
-	ret, _, _ := procAttachConsole.Call(attachParentProcess)
-	if ret == 0 {
-		// 独立分配控制台
-		procAllocConsole.Call()
+	// 如果来自已有终端或者显式请求开启，重定向标准输出确保日志直接进入终端
+	hwnd, _, _ := procGetConsoleWindow.Call()
+	if hwnd == 0 {
+		ret, _, _ := procAttachConsole.Call(attachParentProcess)
+		if ret == 0 {
+			procAllocConsole.Call()
+		}
 	}
 
-	// 重新定向标准输入输出
 	os.Stdout, _ = os.OpenFile("CONOUT$", os.O_WRONLY, 0644)
 	os.Stderr, _ = os.OpenFile("CONOUT$", os.O_WRONLY, 0644)
 	os.Stdin, _ = os.OpenFile("CONIN$", os.O_RDONLY, 0644)
@@ -64,11 +96,22 @@ func OpenDefaultBrowser(url string) error {
 
 // CloseNativeWindow 关闭当前由本程序拉起的 Edge 独立 App 战术小窗口
 func CloseNativeWindow() {
+	activeWindowHwndMu.Lock()
+	hwnd := activeWindowHwnd
+	activeWindowHwnd = 0
+	activeWindowHwndMu.Unlock()
+
+	// 1. 发送 Win32 原生 WM_CLOSE 消息给窗口句柄
+	if hwnd != 0 {
+		procPostMessageW.Call(hwnd, wmClose, 0, 0)
+	}
+
 	nativeWindowCmdMu.Lock()
 	defer nativeWindowCmdMu.Unlock()
 
+	// 2. 终止持有的独立 Edge 子进程
 	if nativeWindowCmd != nil && nativeWindowCmd.Process != nil {
-		log.Printf("🖥️ 正在关闭 UI 独立战术窗口 (PID: %d)...", nativeWindowCmd.Process.Pid)
+		log.Printf("🖥️ 正在终止 UI 独立战术沙箱进程 (PID: %d)...", nativeWindowCmd.Process.Pid)
 		_ = nativeWindowCmd.Process.Kill()
 		nativeWindowCmd = nil
 	}
@@ -87,13 +130,24 @@ func OpenNativeWindow(url string) error {
 		edgePath = `C:\Program Files\Microsoft\Edge\Application\msedge.exe`
 	}
 
+	// 隔离 Edge Profile，打破 Chromium 全局单例委托机制，确保作为当前进程真正的子进程运行在 Job Object 中
+	profileDir := `D:\temp\gemini\ImLagGoGoGo\edge_profile`
+	if err := os.MkdirAll(profileDir, 0755); err != nil {
+		profileDir = filepath.Join(os.TempDir(), "imlag_edge_profile")
+		_ = os.MkdirAll(profileDir, 0755)
+	}
+
 	appArg := fmt.Sprintf("--app=%s", url)
+	userDataArg := fmt.Sprintf("--user-data-dir=%s", profileDir)
 	windowSizeArg := "--window-size=999,666"
 
 	cmd := exec.Command(
 		edgePath,
 		appArg,
+		userDataArg,
 		windowSizeArg,
+		"--no-first-run",
+		"--no-default-browser-check",
 	)
 
 	if err := cmd.Start(); err != nil {
@@ -119,7 +173,7 @@ func OpenNativeWindow(url string) error {
 		nativeWindowCmdMu.Unlock()
 	}()
 
-	// 异步居中调整
+	// 异步居中调整并捕获 HWND
 	go centerAndResizeWindow(999, 666)
 
 	return nil
@@ -161,6 +215,10 @@ func centerAndResizeWindow(width, height int) {
 		procEnumWindows.Call(cb, 0)
 
 		if foundHwnd != 0 {
+			activeWindowHwndMu.Lock()
+			activeWindowHwnd = foundHwnd
+			activeWindowHwndMu.Unlock()
+
 			// SWP_SHOWWINDOW = 0x0040
 			procSetWindowPos.Call(
 				foundHwnd,

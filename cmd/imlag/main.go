@@ -80,7 +80,7 @@ func main() {
 
 	if logFile, err := os.OpenFile("imlag.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
 		defer logFile.Close()
-		if openConsole {
+		if openConsole || ui.IsLaunchedFromTerminal() {
 			log.SetOutput(io.MultiWriter(os.Stdout, logFile))
 		} else {
 			log.SetOutput(logFile)

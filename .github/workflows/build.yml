@@ -80,6 +80,7 @@ jobs:
           gh release delete $tag --yes --cleanup-tag 2>$null || $true
           gh release create $tag `
             --title "ImLagGoGoGo $tag (CS2 战术死后狡辩系统)" `
-            --notes "### 🎮 ImLagGoGoGo $tag`n`n基于 Go 1.24 重构，纯静态单二进制，仅约 7MB 体积，原生 CS2 沉浸式战术 UI。`n`n- 方案 A 原生 CS2 CFG 别名轮换免聊天框瞬间打出`n- 方案 B Win32 硬件扫描码模拟`n- 彻底杜绝拼音输入法候选框吞字`n- 洗牌池无放回借口轮转`n- 智能端口冲突避让 (9090~9099)" `
+            --notes "### 🎮 ImLagGoGoGo $tag`n`n基于 Go 1.24 重构，纯静态单一二进制 (Single Binary)，约 7MB 体积，原生 CS2 沉浸式战术 UI。`n`n- 方案 A 原生 CS2 CFG 别名轮换免聊天框瞬间打出`n- 方案 B Win32 硬件扫描码模拟`n- 纯单文件发布，支持免解压直接下载运行`n- 内核级 Job Object 与沙箱进程绑定，Ctrl+C 与关窗完美同步`n- 洗牌池无放回借口轮转`n- 智能端口冲突避让 (9090~9099)" `
             --latest `
+            dist/imlag-gogo.exe `
             dist/ImLagGoGoGo-windows-x64.zip

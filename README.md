@@ -5,17 +5,11 @@
 **🎮 CS2死后全自动狡辩工具 (Go 重构版) ⚡ 极轻量、纯静态单文件 🚀**
 
 [![Go Version](https://img.shields.io/badge/Go-1.24-00ADD8?logo=go&logoColor=white)](https://golang.org)
-[![Top Language](https://img.shields.io/github/languages/top/VincentZyu233/ImLagGoGoGo?style=flat&logo=go&logoColor=white)](https://github.com/VincentZyu233/ImLagGoGoGo)
-[![Language Count](https://img.shields.io/github/languages/count/VincentZyu233/ImLagGoGoGo?style=flat)](https://github.com/VincentZyu233/ImLagGoGoGo)
-[![Repo Size](https://img.shields.io/github/repo-size/VincentZyu233/ImLagGoGoGo?style=flat)](https://github.com/VincentZyu233/ImLagGoGoGo)
+[![Top Language](https://img.shields.io/github/languages/top/VincentZyu233/ImLagGoGoGo?logo=go&logoColor=white)](https://github.com/VincentZyu233/ImLagGoGoGo)
+[![Language Count](https://img.shields.io/github/languages/count/VincentZyu233/ImLagGoGoGo)](https://github.com/VincentZyu233/ImLagGoGoGo)
+[![Repo Size](https://img.shields.io/github/repo-size/VincentZyu233/ImLagGoGoGo)](https://github.com/VincentZyu233/ImLagGoGoGo)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20x64%20%7C%20Linux%20(WIP)-blue)](https://github.com/VincentZyu233/ImLagGoGoGo)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-<br/>
-
-<img src="docs/images/preview-chat-in-game.png" width="70%" alt="CS2 游戏内死后全自动狡辩实测" />
-
-*“跑射也能秒我？跳ping了！眼睛眨了一下！微信弹窗把我切出去了...”*
 
 </div>
 
@@ -23,27 +17,40 @@
 
 ## 📸 界面与实机预览 (Screenshots)
 
-<div align="center">
+### 🎮 游戏内公屏狡辩实况 (实录 1)
+*“跑射也能秒我？跳ping了！眼睛眨了一下！微信弹窗把我切出去了...”*
 
-| 🎮 游戏内公屏狡辩实况 (实录 1) | 🎮 游戏内公屏狡辩实况 (实录 2) |
-| :---: | :---: |
-| <img src="docs/images/preview-chat-in-game.png" width="100%" alt="游戏内实测 1" /> | <img src="docs/images/preview-chat-in-game-2.png" width="100%" alt="游戏内实测 2" /> |
-| *“跑射也能秒我？跳ping了！眼睛眨了一下...”* | *“感冒了没反应！拆消音器去了！状态不行...”* |
+<img src="docs/images/preview-chat-in-game.png" width="85%" alt="游戏内实测 1" />
+
+<br/>
+
+### 🎮 游戏内公屏狡辩实况 (实录 2)
+*“感冒了没反应！拆消音器去了！状态不行！屏幕太小！对面锁了...”*
+
+<img src="docs/images/preview-chat-in-game-2.png" width="85%" alt="游戏内实测 2" />
 
 <br/>
 
 ### 🖥️ CS2 原生战术沉浸风控制面板
-<img src="docs/images/preview-webui.png" width="85%" alt="战术控制面板" />
+*原生还原 CS2 Panorama 暗黑战术网格与青蓝微光风格，纯静态零外部依赖。*
 
-</div>
+<img src="docs/images/preview-webui.png" width="85%" alt="战术控制面板" />
 
 ---
 
-## 📊 语言统计 (Language Stats)
+## 📊 语言统计 (Languages)
 
 <div align="center">
 
-[![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=VincentZyu233&repo=ImLagGoGoGo&layout=compact&theme=dark&hide_border=true)](https://github.com/VincentZyu233/ImLagGoGoGo)
+[![Go](https://img.shields.io/badge/Go-64.0%25-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://github.com/VincentZyu233/ImLagGoGoGo)
+[![HTML](https://img.shields.io/badge/HTML-31.5%25-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://github.com/VincentZyu233/ImLagGoGoGo)
+[![Python](https://img.shields.io/badge/Python-4.5%25-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://github.com/VincentZyu233/ImLagGoGoGo)
+
+| 语言 (Language) | 代码占比 | 模块定位与职责 |
+| :--- | :---: | :--- |
+| **Go** | **64.0%** | **核心引擎**：Win32 / Linux 底层驱动、GSI 监听服务、状态机与原生 CFG 调度 |
+| **HTML / CSS / JS** | **31.5%** | **战术面板**：CS2 Panorama 沉浸风 UI（单文件零依赖内嵌，极简高效） |
+| **Python** | **4.5%** | **工程基建**：多平台自动化构建流水线与跨架构二进制发布打包 |
 
 </div>
 

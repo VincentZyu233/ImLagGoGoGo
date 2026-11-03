@@ -78,6 +78,28 @@ def build(target: str, is_debug: bool = False, do_package: bool = False):
     file_size_mb = output_bin.stat().st_size / (1024 * 1024)
     print(f"✅ 编译成功: {output_bin.name} ({file_size_mb:.2f} MB)")
 
+    cli_bin = None
+    if goos == "windows" and not is_debug:
+        cli_bin = DIST_DIR / "imlag-gogo-cli.exe"
+        cmd_cli = [
+            "go", "build",
+            "-ldflags=-s -w",
+            "-trimpath",
+            "-o", str(cli_bin),
+            "./cmd/imlag"
+        ]
+        print(f"🔨 正在编译 Windows 控制台专版 [imlag-gogo-cli.exe]...")
+        res_cli = subprocess.run(cmd_cli, cwd=REPO_ROOT, env=env)
+        if res_cli.returncode == 0:
+            cli_size_mb = cli_bin.stat().st_size / (1024 * 1024)
+            print(f"✅ 编译成功: {cli_bin.name} ({cli_size_mb:.2f} MB)")
+
+        # 生成便捷启动脚本 imlag-gogo.cmd
+        cmd_script = DIST_DIR / "imlag-gogo.cmd"
+        cmd_content = "@echo off\r\nif exist \"%~dp0imlag-gogo-cli.exe\" (\r\n    \"%~dp0imlag-gogo-cli.exe\" %*\r\n) else (\r\n    \"%~dp0imlag-gogo.exe\" --console=true %*\r\n)\r\n"
+        cmd_script.write_text(cmd_content, encoding="utf-8")
+        print("💡 已生成终端快捷启动脚本: dist/imlag-gogo.cmd")
+
     # 复制模板文件到 dist
     template_files = [
         (ASSETS_DIR / "config.example.toml", DIST_DIR / "config.example.toml"),
@@ -111,6 +133,8 @@ def build(target: str, is_debug: bool = False, do_package: bool = False):
 
         files_to_pack = [
             output_bin,
+            DIST_DIR / "imlag-gogo-cli.exe",
+            DIST_DIR / "imlag-gogo.cmd",
             DIST_DIR / "config.example.toml",
             DIST_DIR / "Messages.example.txt",
             DIST_DIR / "README.md",

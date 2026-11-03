@@ -25,6 +25,9 @@ import (
 )
 
 func main() {
+	// 0. 初始化 Windows Job Object (确保进程树强绑定，防止 Edge 战术小窗口残留孤儿进程)
+	ui.InitJobObject()
+
 	configPath := flag.String("config", "", "指定 config.toml 路径")
 
 	// 三维行为矩阵 Flags (默认 nil，用于判断命令行是否显式传入)
@@ -184,14 +187,35 @@ func main() {
 		})
 	}()
 
-	// 10. 优雅终止信号捕获 (主进程常驻)
+	// 10. 统一多源优雅退出通道 (兼容控制台 Ctrl+C、系统信号与托盘动作)
+	exitChan := make(chan string, 1)
+
+	// 注册底层控制台钩子回调
+	ui.RegisterShutdownHook(func(reason string) {
+		select {
+		case exitChan <- reason:
+		default:
+		}
+	})
+
+	// 注册 Go 运行时标准 OS 信号捕获
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	sig := <-sigChan
+	go func() {
+		s := <-sigChan
+		select {
+		case exitChan <- fmt.Sprintf("系统信号 %v", s):
+		default:
+		}
+	}()
 
-	log.Printf("🛑 接收到系统终止信号: %v (%T)...", sig, sig)
+	reason := <-exitChan
+	log.Printf("🛑 正在停止 ImLagGoGoGo 服务 (触发原因: %s)...", reason)
+	ui.CloseNativeWindow()
 	_ = gsiSrv.Stop()
 	systray.Quit()
+	log.Println("👋 狡辩系统已安全退出，再见！")
+	os.Exit(0)
 }
 
 func startCorpusWatcher(filePath string, cm *corpus.CorpusManager, drv driver.Driver, cfg *config.Config) {
@@ -276,8 +300,7 @@ func onSystrayReady(cfg *config.Config, cm *corpus.CorpusManager, eng *state.Eng
 	})
 
 	mQuit.Click(func() {
-		systray.Quit()
-		os.Exit(0)
+		ui.TriggerShutdown("用户通过系统托盘退出")
 	})
 }
 

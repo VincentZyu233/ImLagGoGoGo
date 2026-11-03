@@ -4,8 +4,10 @@ package ui
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
+	"sync"
 	"syscall"
 	"time"
 	"unsafe"
@@ -25,12 +27,18 @@ var (
 	procIsWindowVisible          = user32Dll.NewProc("IsWindowVisible")
 	procGetClassName             = user32Dll.NewProc("GetClassNameW")
 	procGetWindowText            = user32Dll.NewProc("GetWindowTextW")
+
+	nativeWindowCmdMu sync.Mutex
+	nativeWindowCmd   *exec.Cmd
 )
 
 const attachParentProcess = ^uintptr(0)
 
 // EnsureConsole 根据参数在必要时分配或挂载控制台
 func EnsureConsole(enable bool) {
+	// 无论是否显式开启，都安装控制台底层处理函数
+	InstallConsoleCtrlHandler()
+
 	if !enable {
 		return
 	}
@@ -54,8 +62,26 @@ func OpenDefaultBrowser(url string) error {
 	return cmd.Start()
 }
 
+// CloseNativeWindow 关闭当前由本程序拉起的 Edge 独立 App 战术小窗口
+func CloseNativeWindow() {
+	nativeWindowCmdMu.Lock()
+	defer nativeWindowCmdMu.Unlock()
+
+	if nativeWindowCmd != nil && nativeWindowCmd.Process != nil {
+		log.Printf("🖥️ 正在关闭 UI 独立战术窗口 (PID: %d)...", nativeWindowCmd.Process.Pid)
+		_ = nativeWindowCmd.Process.Kill()
+		nativeWindowCmd = nil
+	}
+}
+
 // OpenNativeWindow 打开精简的独立 App 桌面窗口
 func OpenNativeWindow(url string) error {
+	nativeWindowCmdMu.Lock()
+	if nativeWindowCmd != nil && nativeWindowCmd.Process != nil {
+		_ = nativeWindowCmd.Process.Kill()
+		nativeWindowCmd = nil
+	}
+
 	edgePath := `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`
 	if _, err := os.Stat(edgePath); err != nil {
 		edgePath = `C:\Program Files\Microsoft\Edge\Application\msedge.exe`
@@ -71,8 +97,27 @@ func OpenNativeWindow(url string) error {
 	)
 
 	if err := cmd.Start(); err != nil {
+		nativeWindowCmdMu.Unlock()
 		return err
 	}
+
+	nativeWindowCmd = cmd
+	nativeWindowCmdMu.Unlock()
+
+	// 显式将 Edge 子进程加入全局 Job Object，实现父进程退出时操作系统内核级强杀
+	if cmd.Process != nil {
+		AssignProcessToJob(cmd.Process)
+	}
+
+	// 异步监听 Edge 窗口关闭事件
+	go func() {
+		_ = cmd.Wait()
+		nativeWindowCmdMu.Lock()
+		if nativeWindowCmd == cmd {
+			nativeWindowCmd = nil
+		}
+		nativeWindowCmdMu.Unlock()
+	}()
 
 	// 异步居中调整
 	go centerAndResizeWindow(999, 666)
